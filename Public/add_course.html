@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Course - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 30px auto;
+            max-width: 900px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            width: 70%;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #27ae60;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #219150;
+        }
+        .message {
+            margin: 10px auto;
+            font-weight: bold;
+            color: #d35400;
+        }
+        .course-card {
+            background: #f7f7f7;
+            margin: 15px auto;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-card {
+            background: #ecf0f1;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .section-card button {
+            margin-top: 5px;
+            background-color: #3498db;
+        }
+        .section-card button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add Course</h1>
+    <input type="number" id="courseId" placeholder="Course ID (optional)"><br>
+    <input type="text" id="courseName" placeholder="Course Name (optional)"><br>
+    <input type="text" id="department" placeholder="Department (optional)"><br>
+    <button onclick="searchCourse()">Search Courses</button>
+    <div class="message" id="result"></div>
+    <div id="courseInfo"></div>
+    <button onclick="window.location.href='student_dashboard.html'">Back to Dashboard</button>
+
+    <script>
+        function searchCourse() {
+            const courseId = document.getElementById('courseId').value;
+            const name = document.getElementById('courseName').value;
+            const department = document.getElementById('department').value;
+            const courseInfoDiv = document.getElementById('courseInfo');
+            const resultDiv = document.getElementById('result');
+
+            courseInfoDiv.innerHTML = "Loading...";
+            resultDiv.innerHTML = "";
+
+            fetch(`/api/student/search-course?courseId=${encodeURIComponent(courseId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`)
+                .then(res => res.json())
+                .then(data => {
+                    courseInfoDiv.innerHTML = "";
+
+                    if (!data.courses || data.courses.length === 0) {
+                        resultDiv.innerHTML = "No matching courses found.";
+                        return;
+                    }
+
+                    data.courses.forEach(course => {
+                        let prereqText = course.prerequisite ? course.prerequisite : "None";
+
+                        const courseCard = document.createElement("div");
+                        courseCard.className = "course-card";
+                        courseCard.innerHTML = `
+                            <strong>Course ID:</strong> ${course.Course_ID}<br>
+                            <strong>Name:</strong> ${course.name}<br>
+                            <strong>Description:</strong> ${course.description}<br>
+                            <strong>Credits:</strong> ${course.credits}<br>
+                            <strong>Department:</strong> ${course.department}<br>
+                            <strong>Semester:</strong> ${course.semester}<br>
+                            <strong>Prerequisite:</strong> ${prereqText}<br>
+                            <div id="sections-${course.Course_ID}"><em>Loading sections...</em></div>
+                        `;
+
+                        courseInfoDiv.appendChild(courseCard);
+
+                        fetch(`/api/student/course-sections/${course.Course_ID}`)
+                            .then(res => res.json())
+                            .then(sectionData => {
+                                const sectionDiv = document.getElementById(`sections-${course.Course_ID}`);
+                                if (!sectionData.sections || sectionData.sections.length === 0) {
+                                    sectionDiv.innerHTML = "<p>No sections available.</p>";
+                                    return;
+                                }
+
+                                sectionDiv.innerHTML = "";
+                                sectionData.sections.forEach(section => {
+                                    const secCard = document.createElement("div");
+                                    secCard.className = "section-card";
+                                    secCard.innerHTML = `
+                                        <strong>Section:</strong> ${section.section_number}<br>
+                                        <strong>Day:</strong> ${section.day_of_week}<br>
+                                        <strong>Time:</strong> ${section.start_time} - ${section.end_time}<br>
+                                        <strong>Room:</strong> ${section.room_no}<br>
+                                        <strong>Mode:</strong> ${section.mode}<br>
+                                        <button onclick="addCourse(${course.Course_ID}, ${section.Section_ID}, '${course.name}')">Add This Section</button>
+                                    `;
+                                    sectionDiv.appendChild(secCard);
+                                });
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                document.getElementById(`sections-${course.Course_ID}`).innerHTML = "<p>Error loading sections.</p>";
+                            });
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    resultDiv.innerHTML = "⚠️ Error searching courses.";
+                });
+        }
+
+        function addCourse(courseId, sectionId, courseName) {
+            const resultDiv = document.getElementById('result');
+
+            fetch('/api/student/add-course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId, sectionId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                resultDiv.innerHTML = data.message;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(err => {
+                console.error(err);
+                resultDiv.innerHTML = "⚠️ Error adding course.";
+            });
+        }
+    </script>
+</body>
+</html>

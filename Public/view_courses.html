@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Enrolled Courses - Grand Lakes University</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 50px; }
+        h1 { color: #2c3e50; }
+        .course-card {
+            background: #ecf0f1;
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            width: 60%;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Enrolled Courses</h1>
+    <div id="courses"></div>
+    <button onclick="window.location.href='student_dashboard.html'">Back to Dashboard</button>
+
+    <script>
+        fetch('/api/student/courses')
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('courses');
+                if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                    container.innerHTML = "<p>No enrolled courses found.</p>";
+                } else {
+                    data.enrolledCourses.forEach(course => {
+                        container.innerHTML += `
+                            <div class="course-card">
+                                <strong>Course ID:</strong> ${course.Course_ID}<br>
+                                <strong>Course Name:</strong> ${course.Course_Name}<br>
+                                <strong>Section:</strong> ${course.section_number}<br>
+                                <strong>Day:</strong> ${course.day_of_week}<br>
+                                <strong>Time:</strong> ${course.start_time} - ${course.end_time}<br>
+                                <strong>Room:</strong> ${course.room_no}<br>
+                                <strong>Mode:</strong> ${course.mode}
+                            </div>
+                        `;
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('courses').innerHTML = "<p>Error fetching courses.</p>";
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drop Course - Grand Lakes University</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 40px; }
+        h1 { color: #2c3e50; }
+        .course-card {
+            background: #ecf0f1;
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            width: 70%;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 8px 15px;
+            margin-top: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #c0392b;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover { background-color: #a93226; }
+        .message { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Drop a Course</h1>
+    <div id="courses"></div>
+    <div class="message" id="result"></div>
+    <button onclick="window.location.href='student_dashboard.html'">Back to Dashboard</button>
+
+    <script>
+        function loadCourses() {
+            fetch('/api/student/courses')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('courses');
+                    container.innerHTML = "";
+
+                    if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                        container.innerHTML = "<p>No enrolled courses found.</p>";
+                        return;
+                    }
+
+                    data.enrolledCourses.forEach(course => {
+                        container.innerHTML += `
+                            <div class="course-card">
+                                <strong>Course ID:</strong> ${course.Course_ID}<br>
+                                <strong>Course Name:</strong> ${course.Course_Name}<br>
+                                <strong>Section:</strong> ${course.section_number}<br>
+                                <strong>Day:</strong> ${course.day_of_week}<br>
+                                <strong>Time:</strong> ${course.start_time} - ${course.end_time}<br>
+                                <strong>Room:</strong> ${course.room_no}<br>
+                                <strong>Mode:</strong> ${course.mode}<br>
+                                <button onclick="dropCourse(${course.Course_ID}, ${course.Section_ID})">Drop</button>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('courses').innerHTML = "<p>Error loading courses.</p>";
+                });
+        }
+
+        function dropCourse(courseId, sectionId) {
+            const resultDiv = document.getElementById('result');
+
+            fetch('/api/student/drop-course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId, sectionId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                resultDiv.innerHTML = data.message;
+                loadCourses(); // Refresh list after dropping
+            })
+            .catch(err => {
+                console.error(err);
+                resultDiv.innerHTML = "⚠️ Error dropping course.";
+            });
+        }
+
+        // Initial load
+        loadCourses();
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+        }
+        header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        #welcomeMsg {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 16px;
+            color: white;
+        }
+        h1 {
+            margin: 0;
+        }
+        .nav-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 40px 20px;
+        }
+        .nav-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 15px;
+            padding: 20px 30px;
+            text-align: center;
+            width: 220px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .nav-card h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .logout-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #e74c3c;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Grand Lakes University - Student Dashboard</h1>
+        <div id="welcomeMsg"></div>
+    </header>
+
+    <div class="nav-container">
+        <div class="nav-card" onclick="window.location.href='view_courses.html'">
+            <h3>View Enrolled Courses</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='add_course.html'">
+            <h3>Add Course</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='drop_course.html'">
+            <h3>Drop Course</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='student_create_exchange.html'">
+            <h3>Request Section Exchange</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='student_view_requests.html'">
+            <h3>Available Exchange Requests</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='student_my_requests.html'">
+            <h3>My Exchange Requests</h3>
+        </div>
+        <div class="nav-card" onclick="window.location.href='student_transcript.html'">
+            <h3>View Transcript</h3>
+        </div>
+
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
+    <script>
+        function loadWelcome() {
+            fetch('/api/session-info')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.firstName) {
+                        document.getElementById('welcomeMsg').innerHTML = `👋 Welcome, ${data.firstName}!`;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        }
+
+        function logout() {
+            // Example simple logout (just redirect)
+            window.location.href = 'index.html';
+        }
+
+        window.onload = loadWelcome;
+    </script>
+</body>
+</html>

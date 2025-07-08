@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transcript - Grand Lakes University</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+        th, td { padding: 10px; border: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        .gpa { font-size: 20px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>My Transcript</h1>
+    <div id="gpa" class="gpa"></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Course Name</th>
+                <th>Credits</th>
+                <th>Grade</th>
+                <th>Semester</th>
+            </tr>
+        </thead>
+        <tbody id="transcriptBody">
+        </tbody>
+    </table>
+
+    <script>
+        function loadTranscript() {
+            fetch('/api/student/transcript')
+                .then(res => res.json())
+                .then(data => {
+                    const body = document.getElementById('transcriptBody');
+                    const gpaDiv = document.getElementById('gpa');
+                    body.innerHTML = "";
+
+                    if (!data.transcript || data.transcript.length === 0) {
+                        body.innerHTML = "<tr><td colspan='4'>No completed courses found.</td></tr>";
+                        gpaDiv.innerHTML = "GPA: N/A";
+                        return;
+                    }
+
+                    data.transcript.forEach(row => {
+                        body.innerHTML += `
+                            <tr>
+                                <td>${row.name}</td>
+                                <td>${row.credits}</td>
+                                <td>${row.Grade}</td>
+                                <td>${row.semester}</td>
+                            </tr>
+                        `;
+                    });
+
+                    gpaDiv.innerHTML = `Cumulative GPA: ${data.gpa}`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('transcriptBody').innerHTML = "<tr><td colspan='4'>⚠️ Error loading transcript.</td></tr>";
+                });
+        }
+
+        loadTranscript();
+    </script>
+</body>
+</html>

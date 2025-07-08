@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Exchange Requests - Grand Lakes University</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        .card { background: #ecf0f1; margin: 20px auto; padding: 15px; border-radius: 8px; width: 70%; text-align: left; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+        .status-pending { color: orange; }
+        .status-approved { color: green; }
+        .status-rejected { color: red; }
+    </style>
+</head>
+<body>
+    <h1>My Exchange Requests</h1>
+    <div id="requests"></div>
+
+    <script>
+        function loadMyRequests() {
+            fetch('/api/my-exchange-requests')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('requests');
+                    container.innerHTML = "";
+                    if (!data.requests || data.requests.length === 0) {
+                        container.innerHTML = "<p>No exchange requests found.</p>";
+                        return;
+                    }
+
+                    data.requests.forEach(req => {
+                        let statusClass = "";
+                        if (req.Status === "Pending") statusClass = "status-pending";
+                        if (req.Status === "Approved") statusClass = "status-approved";
+                        if (req.Status === "Rejected") statusClass = "status-rejected";
+
+                        container.innerHTML += `
+                            <div class="card">
+                                <strong>Request ID:</strong> ${req.Request_ID}<br>
+                                <strong>Course:</strong> ${req.Course_Name} (ID: ${req.Course_ID})<br>
+                                <strong>From Section:</strong> ${req.From_Section}<br>
+                                <strong>To Section:</strong> ${req.To_Section}<br>
+                                <strong>Status:</strong> <span class="${statusClass}">${req.Status}</span><br>
+                                <strong>Requested On:</strong> ${new Date(req.Requested_On).toLocaleString()}
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('requests').innerHTML = "⚠️ Error loading requests.";
+                });
+        }
+
+        loadMyRequests();
+    </script>
+</body>
+</html>

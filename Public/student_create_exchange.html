@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Exchange Request</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        .card { background: #ecf0f1; margin: 20px auto; padding: 15px; border-radius: 8px; width: 70%; text-align: left; }
+        button { padding: 10px 20px; margin-top: 10px; font-size: 14px; cursor: pointer; background-color: #27ae60; border: none; color: white; border-radius: 5px; }
+        button:hover { background-color: #219150; }
+        .msg { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Create Exchange Request</h1>
+    <div id="courses"></div>
+    <div class="msg" id="msg"></div>
+
+    <script>
+        function loadCourses() {
+            fetch('/api/student/courses')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('courses');
+                    container.innerHTML = "";
+                    if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                        container.innerHTML = "<p>No enrolled courses found.</p>";
+                        return;
+                    }
+
+                    data.enrolledCourses.forEach(course => {
+                        container.innerHTML += `
+                            <div class="card">
+                                <strong>Course ID:</strong> ${course.Course_ID}<br>
+                                <strong>Course Name:</strong> ${course.Course_Name}<br>
+                                <strong>Section:</strong> ${course.section_number}<br>
+                                <button onclick="loadTargetSections(${course.Course_ID}, ${course.Section_ID})">Request Exchange</button>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('courses').innerHTML = "⚠️ Error loading courses.";
+                });
+        }
+
+        function loadTargetSections(courseId, currentSectionId) {
+            const container = document.getElementById('courses');
+            container.innerHTML = "<p>Loading available sections...</p>";
+
+            fetch(`/api/student/course-sections/${courseId}`)
+                .then(res => res.json())
+                .then(data => {
+                    container.innerHTML = `<h3>Available sections for Course ID: ${courseId}</h3>`;
+                    data.sections.forEach(section => {
+                        if (section.Section_ID !== currentSectionId) {
+                            container.innerHTML += `
+                                <div class="card">
+                                    <strong>Section Number:</strong> ${section.section_number}<br>
+                                    <strong>Day:</strong> ${section.day_of_week}<br>
+                                    <strong>Time:</strong> ${section.start_time} - ${section.end_time}<br>
+                                    <strong>Room:</strong> ${section.room_no}<br>
+                                    <strong>Mode:</strong> ${section.mode}<br>
+                                    <button onclick="createRequest(${courseId}, ${currentSectionId}, ${section.Section_ID})">Request Exchange to This Section</button>
+                                </div>
+                            `;
+                        }
+                    });
+                    container.innerHTML += `<button onclick="loadCourses()">⬅️ Back to My Sections</button>`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    container.innerHTML = "⚠️ Error loading target sections.";
+                });
+        }
+
+        function createRequest(courseId, sectionFrom, sectionTo) {
+            fetch('/api/exchange-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId, sectionFrom, sectionTo })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('msg').innerHTML = data.message;
+                loadCourses();
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('msg').innerHTML = "⚠️ Error creating request.";
+            });
+        }
+
+        loadCourses();
+    </script>
+</body>
+</html>

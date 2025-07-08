@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin-top: 60px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #e67e22;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, Admin!</h1>
+    <p>Manage the system from here:</p>
+
+    <button onclick="window.location.href='create_student.html'">Create Student</button>
+    <button onclick="window.location.href='create_course.html'">Create Course</button>
+    <button onclick="window.location.href='update_course.html'">Update Course Info</button>
+    <button onclick="window.location.href='create_instructor.html'">Create Instructor</button>
+    <button onclick="window.location.href='home.html'">Logout</button>
+</body>
+</html>
