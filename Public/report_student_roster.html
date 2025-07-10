@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Roster Report - GLU</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+        .sidebar { width: 220px; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding-top: 30px; }
+        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; }
+        .sidebar a { padding: 15px 20px; color: white; text-decoration: none; display: block; transition: background 0.3s; }
+        .sidebar a:hover { background-color: #34495e; }
+        .logout-btn { margin-top: auto; padding: 15px 20px; background-color: #c0392b; text-align: center; cursor: pointer; }
+        .logout-btn:hover { background-color: #a93226; }
+        .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        .filters { margin-bottom: 20px; }
+        select, input, button { padding: 8px; margin-right: 10px; font-size: 14px; }
+        #totalCount { margin-bottom: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <a href="create_student.html">👨‍🎓 Create Student</a>
+        <a href="create_course.html">📚 Create Course</a>
+        <a href="update_course.html">✏️ Update Course</a>
+        <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+        <a href="report_student_roster.html">📄 Student Roster</a>
+        <a href="report_enrollment_program.html">📊 By Program</a>
+        <a href="report_enrollment_semester.html">📅 By Semester</a>
+        <a href="report_course_enrollment.html">📘 Course Enrollment</a>
+        <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+    </div>
+    <div class="content">
+        <h1>Student Roster Report</h1>
+        <div class="filters">
+            <select id="programFilter">
+                <option value="">All Programs</option>
+                <option value="BTech">BTech</option>
+                <option value="BSc">BSc</option>
+                <option value="BA">BA</option>
+                <option value="BBA">BBA</option>
+            </select>
+            <select id="semesterFilter">
+                <option value="">All Semesters</option>
+                <option value="Fall2025">Fall2025</option>
+                <option value="Spring2026">Spring2026</option>
+                <option value="Summer2026">Summer2026</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search name or email">
+            <button onclick="loadReport()">Apply</button>
+            <button onclick="exportToExcel()">Export to Excel</button>
+        </div>
+        <div id="totalCount">Total Students: 0</div>
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Program</th><th>Semester</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let lastData = [];
+
+        function loadReport() {
+            const program = document.getElementById('programFilter').value;
+            const semester = document.getElementById('semesterFilter').value;
+            const search = document.getElementById('searchInput').value;
+
+            let url = `/api/admin/report-student-roster?`;
+            if (program) url += `program=${encodeURIComponent(program)}&`;
+            if (semester) url += `semester=${encodeURIComponent(semester)}&`;
+            if (search) url += `search=${encodeURIComponent(search)}&`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    lastData = data.students;
+                    const tbody = document.querySelector("#studentTable tbody");
+                    tbody.innerHTML = "";
+                    data.students.forEach(s => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${s.student_id}</td>
+                                <td>${s.first_name}</td>
+                                <td>${s.last_name}</td>
+                                <td>${s.email}</td>
+                                <td>${s.program}</td>
+                                <td>${s.semester}</td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById("totalCount").innerText = `Total Students: ${data.students.length}`;
+                })
+                .catch(err => console.error("Error:", err));
+        }
+
+        function exportToExcel() {
+            let csv = "ID,First Name,Last Name,Email,Program,Semester\n";
+            lastData.forEach(s => {
+                csv += `${s.student_id},${s.first_name},${s.last_name},${s.email},${s.program},${s.semester}\n`;
+            });
+
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "student_roster_report.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        loadReport();
+    </script>
+</body>
+</html>

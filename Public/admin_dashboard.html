@@ -3,37 +3,148 @@
 <head>
     <title>Admin Dashboard - Grand Lakes University</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            margin-top: 60px;
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        button {
-            padding: 12px 25px;
-            margin: 15px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #e67e22;
-            border: none;
-            color: white;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #d35400;
-        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+        .sidebar { width: 220px; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding-top: 30px; }
+        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; }
+        .sidebar a { padding: 15px 20px; color: white; text-decoration: none; display: block; transition: background 0.3s; }
+        .sidebar a:hover { background-color: #34495e; }
+        .logout-btn { margin-top: auto; padding: 15px 20px; background-color: #c0392b; text-align: center; cursor: pointer; }
+        .logout-btn:hover { background-color: #a93226; }
+        .content { flex: 1; padding: 30px; background-color: #f4f6f8; overflow-y: auto; }
+        .cards { display: flex; gap: 20px; flex-wrap: wrap; }
+        .card { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; min-width: 150px; }
+        .card h2 { margin: 10px 0; font-size: 28px; }
+        .card p { margin: 0; color: #7f8c8d; }
+        canvas { background: white; padding: 10px; border-radius: 8px; margin-top: 20px; }
+        h2.section-title { margin-top: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #3498db; color: white; }
     </style>
 </head>
 <body>
-    <h1>Welcome, Admin!</h1>
-    <p>Manage the system from here:</p>
 
-    <button onclick="window.location.href='create_student.html'">Create Student</button>
-    <button onclick="window.location.href='create_course.html'">Create Course</button>
-    <button onclick="window.location.href='update_course.html'">Update Course Info</button>
-    <button onclick="window.location.href='create_instructor.html'">Create Instructor</button>
-    <button onclick="window.location.href='home.html'">Logout</button>
+<div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+    <a href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+    <a href="report_student_roster.html">📄 Student Roster</a>
+    <a href="report_enrollment_program.html">📊 By Program</a>
+    <a href="report_enrollment_semester.html">📅 By Semester</a>
+    <a href="report_course_enrollment.html">📘 Course Enrollment</a>
+    <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+</div>
+
+<div class="content">
+    <h1>Welcome, Admin!</h1>
+    <div class="cards">
+        <div class="card">
+            <h2 id="totalStudents">0</h2>
+            <p>Total Students</p>
+        </div>
+        <div class="card">
+            <h2 id="totalCourses">0</h2>
+            <p>Total Courses</p>
+        </div>
+        <div class="card">
+            <h2 id="totalSections">0</h2>
+            <p>Total Sections</p>
+        </div>
+        <div class="card">
+            <h2 id="pendingRequests">0</h2>
+            <p>Pending Requests</p>
+        </div>
+    </div>
+
+    <h2 class="section-title">Enrollment by Program</h2>
+    <canvas id="programChart" height="150"></canvas>
+
+    <h2 class="section-title">Enrollment by Semester</h2>
+    <canvas id="semesterChart" height="150"></canvas>
+
+    <h2 class="section-title">Top 5 Popular Courses</h2>
+    <canvas id="courseChart" height="150"></canvas>
+
+    <h2 class="section-title">Section Capacity Overview</h2>
+    <table>
+        <thead>
+            <tr><th>Course</th><th>Section</th><th>Enrolled</th><th>Capacity</th><th>Available Spots</th></tr>
+        </thead>
+        <tbody id="sectionTable"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    fetch('/api/admin/summary')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('totalStudents').innerText = data.totalStudents;
+            document.getElementById('totalCourses').innerText = data.totalCourses;
+            document.getElementById('totalSections').innerText = data.totalSections;
+            document.getElementById('pendingRequests').innerText = data.pendingRequests;
+        });
+
+    fetch('/api/admin/report-enrollment-by-program')
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.programs.map(p => p.program);
+            const counts = data.programs.map(p => p.student_count);
+            new Chart(document.getElementById('programChart'), {
+                type: 'pie',
+                data: { labels, datasets: [{ data: counts, backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e67e22'] }] }
+            });
+        });
+
+    fetch('/api/admin/report-enrollment-by-semester')
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.semesters.map(s => s.semester);
+            const counts = data.semesters.map(s => s.student_count);
+            new Chart(document.getElementById('semesterChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Students', data: counts, backgroundColor: '#3498db' }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        });
+
+    fetch('/api/admin/report-course-enrollment')
+        .then(res => res.json())
+        .then(data => {
+            const courseCounts = {};
+            data.enrollments.forEach(e => {
+                courseCounts[e.course_name] = (courseCounts[e.course_name] || 0) + 1;
+            });
+            const sortedCourses = Object.entries(courseCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const labels = sortedCourses.map(c => c[0]);
+            const counts = sortedCourses.map(c => c[1]);
+            new Chart(document.getElementById('courseChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Enrollments', data: counts, backgroundColor: '#2ecc71' }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        });
+
+    fetch('/api/admin/section-status')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('sectionTable');
+            data.sections.forEach(sec => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${sec.course_name}</td>
+                        <td>${sec.section_number}</td>
+                        <td>${sec.enrolled}</td>
+                        <td>${sec.capacity}</td>
+                        <td>${sec.capacity - sec.enrolled}</td>
+                    </tr>
+                `;
+            });
+        });
+</script>
+
 </body>
 </html>

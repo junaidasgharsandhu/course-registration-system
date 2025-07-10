@@ -209,11 +209,11 @@ app.post('/api/student/drop-course', (req, res) => {
     const { courseId, sectionId } = req.body;
 
     if (!studentId || req.session.role !== 'student') {
-        return res.status(401).json({ message: "Unauthorized. Please log in as student." });
+        return res.status(401).json({ message: "Unauthorized. Please log in as student.", status: "error" });
     }
 
     if (!courseId || !sectionId) {
-        return res.status(400).json({ message: "Course ID and Section ID are required." });
+        return res.status(400).json({ message: "Course ID and Section ID are required.", status: "error" });
     }
 
     const sql = "DELETE FROM Course_Enrollment WHERE Student_ID = ? AND Course_ID = ? AND Section_ID = ?";
@@ -221,10 +221,10 @@ app.post('/api/student/drop-course', (req, res) => {
     db.query(sql, [studentId, courseId, sectionId], (err, result) => {
         if (err) {
             console.error("Database error:", err);
-            return res.status(500).json({ error: "Internal server error" });
+            return res.status(500).json({ message: "Internal server error", status: "error" });
         }
 
-        res.json({ message: "Course dropped successfully!" });
+        res.json({ message: "Course dropped successfully!", status: "success" });
     });
 });
 
@@ -286,24 +286,23 @@ app.post('/api/student/add-course', (req, res) => {
     const { courseId, sectionId } = req.body;
 
     if (!studentId || req.session.role !== 'student') {
-        return res.status(401).json({ message: "Unauthorized. Please log in as student." });
+        return res.status(401).json({ message: "Unauthorized. Please log in as student.", status: "error" });
     }
 
     if (!courseId || !sectionId) {
-        return res.status(400).json({ message: "Course ID and Section ID are required." });
+        return res.status(400).json({ message: "Course ID and Section ID are required.", status: "error" });
     }
 
     const prereqSql = "SELECT prerequisite FROM Course WHERE Course_ID = ?";
     db.query(prereqSql, [courseId], (err, prereqResults) => {
         if (err) {
             console.error("Database error:", err);
-            return res.status(500).json({ error: "Internal server error" });
+            return res.status(500).json({ message: "Internal server error", status: "error" });
         }
 
         const prereqName = prereqResults[0].prerequisite;
 
         if (!prereqName || prereqName === "NULL" || prereqName === "") {
-            // No prerequisite → proceed to duplicate and conflict checks
             checkDuplicateAndConflict();
             return;
         }
@@ -318,14 +317,13 @@ app.post('/api/student/add-course', (req, res) => {
         db.query(completedSql, [studentId, prereqName], (err2, completedResults) => {
             if (err2) {
                 console.error("Database error:", err2);
-                return res.status(500).json({ error: "Internal server error" });
+                return res.status(500).json({ message: "Internal server error", status: "error" });
             }
 
             if (completedResults.length === 0) {
-                return res.status(400).json({ message: `Prerequisite not met: ${prereqName}` });
+                return res.status(400).json({ message: `Prerequisite not met: ${prereqName}`, status: "error" });
             }
 
-            // Prerequisite met → check duplicate and conflict
             checkDuplicateAndConflict();
         });
     });
@@ -335,19 +333,18 @@ app.post('/api/student/add-course', (req, res) => {
         db.query(checkSql, [studentId, courseId], (checkErr, checkResults) => {
             if (checkErr) {
                 console.error("Database error during duplicate check:", checkErr);
-                return res.status(500).json({ error: "Internal server error" });
+                return res.status(500).json({ message: "Internal server error", status: "error" });
             }
 
             if (checkResults.length > 0) {
-                return res.status(400).json({ message: "You are already enrolled in this course (any section)." });
+                return res.status(400).json({ message: "You are already enrolled in this course (any section).", status: "error" });
             }
 
-            // ✅ Now check for timing conflicts
             const newSectionSql = "SELECT day_of_week, start_time, end_time FROM Section WHERE Section_ID = ?";
             db.query(newSectionSql, [sectionId], (secErr, newSecResults) => {
                 if (secErr || newSecResults.length === 0) {
                     console.error("Database error while checking section:", secErr);
-                    return res.status(500).json({ error: "Error fetching section details." });
+                    return res.status(500).json({ message: "Error fetching section details.", status: "error" });
                 }
 
                 const newSection = newSecResults[0];
@@ -362,7 +359,7 @@ app.post('/api/student/add-course', (req, res) => {
                 db.query(enrolledSql, [studentId], (enrErr, enrolledSections) => {
                     if (enrErr) {
                         console.error("Database error while checking conflicts:", enrErr);
-                        return res.status(500).json({ error: "Error checking schedule conflicts." });
+                        return res.status(500).json({ message: "Error checking schedule conflicts.", status: "error" });
                     }
 
                     const conflict = enrolledSections.some(sec =>
@@ -371,24 +368,46 @@ app.post('/api/student/add-course', (req, res) => {
                     );
 
                     if (conflict) {
-                        return res.status(400).json({ message: "Schedule conflict: You are already enrolled in another course at this time." });
+                        return res.status(400).json({ message: "Schedule conflict: You are already enrolled in another course at this time.", status: "error" });
                     }
 
-                    // ✅ Insert enrollment (all checks passed)
-                    const insertSql = "INSERT INTO Course_Enrollment (Student_ID, Course_ID, Section_ID, enrolled_on) VALUES (?, ?, ?, CURDATE())";
-                    db.query(insertSql, [studentId, courseId, sectionId], (insertErr) => {
-                        if (insertErr) {
-                            console.error("Database error during insert:", insertErr);
-                            return res.status(500).json({ error: "Internal server error" });
+                    // ✅ Capacity check
+                    const sectionCapacitySql = `
+                        SELECT capacity, COUNT(ce.Student_ID) AS enrolledCount
+                        FROM Section s
+                        LEFT JOIN Course_Enrollment ce ON s.Section_ID = ce.Section_ID
+                        WHERE s.Section_ID = ?
+                        GROUP BY s.Section_ID
+                    `;
+                    db.query(sectionCapacitySql, [sectionId], (capErr, capResults) => {
+                        if (capErr || capResults.length === 0) {
+                            console.error("Error checking capacity:", capErr);
+                            return res.status(500).json({ message: "Error checking section capacity.", status: "error" });
                         }
 
-                        res.json({ message: "Course added successfully!" });
+                        const { capacity, enrolledCount } = capResults[0];
+                        if (enrolledCount >= capacity) {
+                            return res.status(400).json({ message: "This section is full. Cannot enroll.", status: "error" });
+                        }
+
+                        // ✅ Insert enrollment (all checks passed)
+                        const insertSql = "INSERT INTO Course_Enrollment (Student_ID, Course_ID, Section_ID, enrolled_on) VALUES (?, ?, ?, CURDATE())";
+                        db.query(insertSql, [studentId, courseId, sectionId], (insertErr) => {
+                            if (insertErr) {
+                                console.error("Database error during insert:", insertErr);
+                                return res.status(500).json({ message: "Internal server error", status: "error" });
+                            }
+
+                            res.json({ message: "Course added successfully!", status: "success" });
+                        });
                     });
                 });
             });
         });
     }
 });
+
+
 
 
 
@@ -549,7 +568,7 @@ app.get('/api/session-info', (req, res) => {
 });
 
 
-// CView My Current Exchange requests
+// View My Current Exchange requests
 
 app.get('/api/my-exchange-requests', (req, res) => {
     const studentId = req.session.userId;
@@ -625,6 +644,218 @@ app.get('/api/student/transcript', (req, res) => {
         const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 'N/A';
 
         res.json({ transcript: results, gpa });
+    });
+});
+
+
+
+
+// Student Profile Information
+
+app.get('/api/student/profile', (req, res) => {
+    const studentId = req.session.userId;
+
+    if (!studentId || req.session.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized. Please log in as student." });
+    }
+
+    const sql = `
+        SELECT student_id, first_name, last_name, email, date_of_birth, street, city, province, postal_code, program, semester
+        FROM Student
+        WHERE student_id = ?
+    `;
+
+    db.query(sql, [studentId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "Student not found." });
+        }
+
+        res.json({ student: results[0] });
+    });
+});
+
+
+app.post('/api/student/update-profile', (req, res) => {
+    const studentId = req.session.userId;
+
+    if (!studentId || req.session.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized. Please log in as student." });
+    }
+
+    const { street, city, province, postal_code, email } = req.body;
+
+    const sql = `
+        UPDATE Student
+        SET street = ?, city = ?, province = ?, postal_code = ?, email = ?
+        WHERE student_id = ?
+    `;
+
+    db.query(sql, [street, city, province, postal_code, email, studentId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ message: "This email is already in use." });
+            }
+            return res.status(500).json({ message: "Internal server error." });
+        }
+
+        res.json({ message: "Profile updated successfully!" });
+    });
+});
+
+
+
+
+
+
+
+// Admin Functions:::
+
+
+
+
+
+//Reports Section: 
+
+app.get('/api/admin/report-student-roster', (req, res) => {
+    let sql = "SELECT student_id, first_name, last_name, email, program, semester FROM Student WHERE 1=1";
+    const params = [];
+
+    if (req.query.program) {
+        sql += " AND program = ?";
+        params.push(req.query.program);
+    }
+
+    if (req.query.semester) {
+        sql += " AND semester = ?";
+        params.push(req.query.semester);
+    }
+
+    if (req.query.search) {
+        sql += " AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)";
+        params.push(`%${req.query.search}%`, `%${req.query.search}%`, `%${req.query.search}%`);
+    }
+
+    sql += " ORDER BY student_id";
+
+    db.query(sql, params, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+        res.json({ students: results });
+    });
+});
+
+
+app.get('/api/admin/report-enrollment-by-program', (req, res) => {
+    const sql = `
+        SELECT program, COUNT(*) AS student_count
+        FROM Student
+        GROUP BY program
+        ORDER BY program
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        res.json({ programs: results });
+    });
+});
+
+
+app.get('/api/admin/report-enrollment-by-semester', (req, res) => {
+    const sql = `
+        SELECT semester, COUNT(*) AS student_count
+        FROM Student
+        GROUP BY semester
+        ORDER BY semester
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        res.json({ semesters: results });
+    });
+});
+
+
+
+app.get('/api/admin/report-course-enrollment', (req, res) => {
+    const sql = `
+        SELECT ce.Student_ID, s.first_name, s.last_name, c.Course_ID, c.name AS course_name, sec.section_number
+        FROM Course_Enrollment ce
+        JOIN Student s ON ce.Student_ID = s.student_id
+        JOIN Course c ON ce.Course_ID = c.Course_ID
+        JOIN Section sec ON ce.Section_ID = sec.Section_ID
+        ORDER BY c.Course_ID, s.last_name
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        res.json({ enrollments: results });
+    });
+});
+
+
+
+// Overall summary stats
+app.get('/api/admin/summary', (req, res) => {
+    const summary = {};
+    db.query('SELECT COUNT(*) AS count FROM Student', (err, studentResults) => {
+        if (err) return res.status(500).json({ message: "Error fetching students" });
+        summary.totalStudents = studentResults[0].count;
+
+        db.query('SELECT COUNT(*) AS count FROM Course', (err2, courseResults) => {
+            if (err2) return res.status(500).json({ message: "Error fetching courses" });
+            summary.totalCourses = courseResults[0].count;
+
+            db.query('SELECT COUNT(*) AS count FROM Section', (err3, sectionResults) => {
+                if (err3) return res.status(500).json({ message: "Error fetching sections" });
+                summary.totalSections = sectionResults[0].count;
+
+                db.query("SELECT COUNT(*) AS count FROM Exchange_Request WHERE Status = 'Pending'", (err4, reqResults) => {
+                    if (err4) return res.status(500).json({ message: "Error fetching requests" });
+                    summary.pendingRequests = reqResults[0].count;
+
+                    res.json(summary);
+                });
+            });
+        });
+    });
+});
+
+// Section status overview
+app.get('/api/admin/section-status', (req, res) => {
+    const sql = `
+        SELECT 
+            c.name AS course_name,
+            s.section_number,
+            s.capacity,
+            COUNT(ce.Student_ID) AS enrolled
+        FROM Section s
+        JOIN Course c ON s.Course_ID = c.Course_ID
+        LEFT JOIN Course_Enrollment ce ON s.Section_ID = ce.Section_ID
+        GROUP BY s.Section_ID
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        res.json({ sections: results });
     });
 });
 
