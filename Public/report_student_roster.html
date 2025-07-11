@@ -17,6 +17,52 @@
         .filters { margin-bottom: 20px; }
         select, input, button { padding: 8px; margin-right: 10px; font-size: 14px; }
         #totalCount { margin-bottom: 10px; font-weight: bold; }
+
+        /* Modal styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        #courseList {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        a.student-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a.student-link:hover {
+            text-decoration: underline;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body>
@@ -48,6 +94,9 @@
                 <option value="Spring2026">Spring2026</option>
                 <option value="Summer2026">Summer2026</option>
             </select>
+            <select id="courseFilter">
+                <option value="">All Courses</option>
+            </select>
             <input type="text" id="searchInput" placeholder="Search name or email">
             <button onclick="loadReport()">Apply</button>
             <button onclick="exportToExcel()">Export to Excel</button>
@@ -63,17 +112,43 @@
         </table>
     </div>
 
+    <!-- Modal HTML -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Courses</h3>
+            <ul id="courseList"></ul>
+        </div>
+    </div>
+
     <script>
         let lastData = [];
+
+        function loadCourses() {
+            fetch('/api/admin/all-courses')
+                .then(res => res.json())
+                .then(data => {
+                    const courseSelect = document.getElementById('courseFilter');
+                    data.courses.forEach(course => {
+                        const opt = document.createElement("option");
+                        opt.value = course.Course_ID;
+                        opt.textContent = course.name;
+                        courseSelect.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error("Error loading courses:", err));
+        }
 
         function loadReport() {
             const program = document.getElementById('programFilter').value;
             const semester = document.getElementById('semesterFilter').value;
+            const course = document.getElementById('courseFilter').value;
             const search = document.getElementById('searchInput').value;
 
             let url = `/api/admin/report-student-roster?`;
             if (program) url += `program=${encodeURIComponent(program)}&`;
             if (semester) url += `semester=${encodeURIComponent(semester)}&`;
+            if (course) url += `courseId=${encodeURIComponent(course)}&`;
             if (search) url += `search=${encodeURIComponent(search)}&`;
 
             fetch(url)
@@ -85,8 +160,8 @@
                     data.students.forEach(s => {
                         tbody.innerHTML += `
                             <tr>
-                                <td>${s.student_id}</td>
-                                <td>${s.first_name}</td>
+                                <td><a href="#" class="student-link" onclick="showCourses(${s.student_id}, '${s.first_name} ${s.last_name}'); return false;">${s.student_id}</a></td>
+                                <td><a href="#" class="student-link" onclick="showCourses(${s.student_id}, '${s.first_name} ${s.last_name}'); return false;">${s.first_name}</a></td>
                                 <td>${s.last_name}</td>
                                 <td>${s.email}</td>
                                 <td>${s.program}</td>
@@ -115,6 +190,50 @@
             document.body.removeChild(a);
         }
 
+        function showCourses(studentId, studentName) {
+            fetch(`/api/admin/student-courses/${studentId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const modal = document.getElementById("courseModal");
+                    const modalTitle = document.getElementById("modalTitle");
+                    const courseList = document.getElementById("courseList");
+                    
+                    modalTitle.textContent = `Courses for ${studentName}`;
+                    courseList.innerHTML = "";
+
+                    if (data.courses.length === 0) {
+                        courseList.innerHTML = "<li>No courses enrolled.</li>";
+                    } else {
+                        data.courses.forEach(course => {
+                            const li = document.createElement("li");
+                            li.textContent = `${course.course_name} (Course ID: ${course.Course_ID}, Section: ${course.section_number})`;
+                            courseList.appendChild(li);
+                        });
+                    }
+
+                    modal.style.display = "block";
+                })
+                .catch(err => {
+                    console.error("Error fetching courses:", err);
+                    alert("Error loading courses. Please try again.");
+                });
+        }
+
+        function closeModal() {
+            document.getElementById("courseModal").style.display = "none";
+        }
+
+        document.getElementById('programFilter').addEventListener('change', loadReport);
+        document.getElementById('semesterFilter').addEventListener('change', loadReport);
+        document.getElementById('courseFilter').addEventListener('change', loadReport);
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadReport();
+            }
+        });
+
+        loadCourses();
         loadReport();
     </script>
 </body>

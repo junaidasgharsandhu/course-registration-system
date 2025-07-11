@@ -9,7 +9,13 @@ const bcrypt = require('bcrypt'); // Optional if you use hashed passwords later
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'Public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Public', 'index.html'));
+});
+
+
 
 // Setup session to track login
 app.use(session({
@@ -711,14 +717,7 @@ app.post('/api/student/update-profile', (req, res) => {
 
 
 
-
-
-
-
 // Admin Functions:::
-
-
-
 
 
 //Reports Section: 
@@ -737,6 +736,11 @@ app.get('/api/admin/report-student-roster', (req, res) => {
         params.push(req.query.semester);
     }
 
+    if (req.query.courseId) {
+        sql += " AND student_id IN (SELECT Student_ID FROM Course_Enrollment WHERE Course_ID = ?)";
+        params.push(req.query.courseId);
+    }
+
     if (req.query.search) {
         sql += " AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)";
         params.push(`%${req.query.search}%`, `%${req.query.search}%`, `%${req.query.search}%`);
@@ -752,6 +756,42 @@ app.get('/api/admin/report-student-roster', (req, res) => {
         res.json({ students: results });
     });
 });
+
+app.get('/api/admin/all-courses', (req, res) => {
+    const sql = "SELECT Course_ID, name FROM Course ORDER BY name";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+        res.json({ courses: results });
+    });
+});
+
+
+
+// Admin: View a student's enrolled courses
+app.get('/api/admin/student-courses/:studentId', (req, res) => {
+    const studentId = req.params.studentId;
+
+    const sql = `
+        SELECT c.Course_ID, c.name AS course_name, sec.section_number
+        FROM Course_Enrollment ce
+        JOIN Course c ON ce.Course_ID = c.Course_ID
+        JOIN Section sec ON ce.Section_ID = sec.Section_ID
+        WHERE ce.Student_ID = ?
+        ORDER BY c.Course_ID
+    `;
+
+    db.query(sql, [studentId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+        res.json({ courses: results });
+    });
+});
+
 
 
 app.get('/api/admin/report-enrollment-by-program', (req, res) => {
@@ -859,6 +899,7 @@ app.get('/api/admin/section-status', (req, res) => {
         res.json({ sections: results });
     });
 });
+
 
 
 
