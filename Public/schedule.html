@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Schedule</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      height: 60px;
+      position: relative;
+    }
+
+    th {
+      background-color: #f3f3f3;
+    }
+
+    .course {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      padding: 5px;
+      box-sizing: border-box;
+      color: #fff;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .Monday    { background-color: #ff9999; }
+    .Tuesday   { background-color: #99ccff; }
+    .Wednesday { background-color: #99ff99; }
+    .Thursday  { background-color: #ffcc99; }
+    .Friday    { background-color: #ccccff; }
+  </style>
+</head>
+<body>
+
+<h2>Student Weekly Schedule</h2>
+
+<table id="schedule-table">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Monday</th>
+      <th>Tuesday</th>
+      <th>Wednesday</th>
+      <th>Thursday</th>
+      <th>Friday</th>
+    </tr>
+  </thead>
+  <tbody id="schedule-body">
+    <!-- Rows will be added by JavaScript -->
+  </tbody>
+</table>
+
+<script>
+  const startHour = 9;
+  const endHour = 17;
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const tbody = document.getElementById('schedule-body');
+
+  for (let hour = startHour; hour < endHour; hour++) {
+    const row = document.createElement('tr');
+    const timeCell = document.createElement('td');
+    timeCell.textContent = `${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`;
+    row.appendChild(timeCell);
+
+    for (let day of days) {
+      const cell = document.createElement('td');
+      cell.setAttribute('data-day', day);
+      cell.setAttribute('data-hour', hour);
+      row.appendChild(cell);
+    }
+
+    tbody.appendChild(row);
+  }
+
+  // Utility: Generate color palette
+  const courseColors = {};
+  const colorPalette = [
+    "#1abc9c", "#3498db", "#9b59b6", "#e67e22", "#e74c3c",
+    "#16a085", "#2980b9", "#8e44ad", "#d35400", "#c0392b",
+    "#f39c12", "#2ecc71", "#7f8c8d"
+  ];
+  let colorIndex = 0;
+
+  fetch('/api/student/courses')
+    .then(res => res.json())
+    .then(data => {
+      const courses = data.enrolledCourses;
+
+      courses.forEach(course => {
+        const day = course.day_of_week;
+        const start = parseInt(course.start_time.split(":")[0]);
+        const end = parseInt(course.end_time.split(":")[0]);
+
+        const courseKey = course.Course_ID + "_" + course.section_number;
+
+        // Assign unique color per course
+        if (!courseColors[courseKey]) {
+          courseColors[courseKey] = colorPalette[colorIndex % colorPalette.length];
+          colorIndex++;
+        }
+
+        for (let hour = start; hour < end; hour++) {
+          const cell = document.querySelector(`td[data-day="${day}"][data-hour="${hour}"]`);
+          if (cell) {
+            const div = document.createElement('div');
+            div.className = 'course';
+            div.style.backgroundColor = courseColors[courseKey];
+            div.textContent = `${course.Course_Name} (${course.section_number})\n${course.room_no}`;
+            cell.appendChild(div);
+          }
+        }
+      });
+    })
+    .catch(err => {
+      console.error('Failed to load schedule:', err);
+    });
+</script>
+
+</body>
+</html>
