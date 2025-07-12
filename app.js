@@ -719,6 +719,51 @@ app.post('/api/student/update-profile', (req, res) => {
 
 // Admin Functions:::
 
+// Admin Dashboard
+
+// Exchange requests status (Approved vs Pending)
+app.get('/api/admin/exchange-request-status', (req, res) => {
+    const sql = `
+        SELECT 
+            SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN Status = 'Approved' THEN 1 ELSE 0 END) AS approved
+        FROM Exchange_Request
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        res.json(results[0]);
+    });
+});
+
+// Available seats and average section strength
+app.get('/api/admin/section-overview', (req, res) => {
+    const sql = `
+        SELECT 
+            SUM(s.capacity - IFNULL(e.enrolledCount, 0)) AS availableSeats,
+            AVG(IFNULL(e.enrolledCount, 0) / s.capacity) AS averageStrength
+        FROM Section s
+        LEFT JOIN (
+            SELECT Section_ID, COUNT(Student_ID) AS enrolledCount
+            FROM Course_Enrollment
+            GROUP BY Section_ID
+        ) e ON s.Section_ID = e.Section_ID
+        WHERE s.capacity > 0
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+        const data = results[0];
+        data.averageStrength = data.averageStrength ? (data.averageStrength * 100).toFixed(1) : '0.0';
+        res.json(data);
+    });
+});
+
+
 
 //Reports Section: 
 
@@ -765,6 +810,60 @@ app.get('/api/admin/all-courses', (req, res) => {
             return res.status(500).json({ message: "Internal server error." });
         }
         res.json({ courses: results });
+    });
+});
+
+// Course_Enrollment: View all students enrolled in a course
+app.get('/api/admin/course-section-status', (req, res) => {
+    let sql = `
+        SELECT 
+            c.Course_ID,
+            c.name AS course_name,
+            sec.section_number,
+            sec.capacity,
+            sec.Section_ID AS section_id,  -- ✅ Fixed: include section ID
+            COUNT(ce.Student_ID) AS enrolled
+        FROM Section sec
+        JOIN Course c ON sec.Course_ID = c.Course_ID
+        LEFT JOIN Course_Enrollment ce ON sec.Section_ID = ce.Section_ID
+        WHERE 1=1
+    `;
+    const params = [];
+
+    if (req.query.courseId) {
+        sql += " AND c.Course_ID = ?";
+        params.push(req.query.courseId);
+    }
+
+    sql += " GROUP BY sec.Section_ID ORDER BY c.name, sec.section_number";
+
+    db.query(sql, params, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+        res.json({ sections: results });
+    });
+});
+
+
+app.get('/api/admin/section-enrollments/:sectionId', (req, res) => {
+    const sectionId = req.params.sectionId;
+
+    const sql = `
+        SELECT s.student_id, s.first_name, s.last_name, s.email, s.program, s.semester
+        FROM Course_Enrollment ce
+        JOIN Student s ON ce.Student_ID = s.student_id
+        WHERE ce.Section_ID = ?
+        ORDER BY s.last_name
+    `;
+
+    db.query(sql, [sectionId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Internal server error." });
+        }
+        res.json({ students: results });
     });
 });
 

@@ -1,64 +1,177 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Course Enrollment Report - GLU</title>
+    <title>Course & Section Overview - GLU</title>
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
-        .sidebar { width: 220px; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding-top: 30px; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; }
-        .sidebar a { padding: 15px 20px; color: white; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover { background-color: #34495e; }
-        .logout-btn { margin-top: auto; padding: 15px 20px; background-color: #c0392b; text-align: center; cursor: pointer; }
-        .logout-btn:hover { background-color: #a93226; }
-        .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #3498db; color: white; }
+
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar h3 {
+            margin: 15px 20px 5px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s, padding-left 0.3s;
+            font-size: 14px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            padding-left: 25px;
+        }
+        .sidebar a.active-link {
+            background-color: #2980b9;
+            padding-left: 25px;
+        }
+        .sidebar .sub-link {
+            padding-left: 40px;
+            font-size: 13px;
+            color: #ecf0f1;
+        }
+        .sidebar .sub-link:hover {
+            background-color: #3d566e;
+            padding-left: 45px;
+        }
+        .sidebar .sub-link.active-link {
+            background-color: #2980b9;
+            padding-left: 45px;
+        }
+        .logout-btn {
+            margin-top: auto;
+            padding: 12px 20px;
+            background-color: #c0392b;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+            background-color: #f4f6f8;
+            overflow-y: auto;
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
         tr:hover { background-color: #f1f1f1; }
         .filters { margin-bottom: 20px; }
-        select, button { padding: 8px; margin-right: 10px; font-size: 14px; }
-        #totalCount { margin-top: 10px; font-weight: bold; }
+        select, button {
+            padding: 8px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        #totalCount {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        a.enrolled-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a.enrolled-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Loader overlay */
+        .loader-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>Admin Panel</h2>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+                <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+            </svg>
+            <h2 style="margin: 5px 0 0 0; font-size: 20px; color: #ecf0f1;">GLU Admin</h2>
+        </div>
+
+        <a href="admin_dashboard.html">🏠 Dashboard</a>
+        <h3>Manage</h3>
         <a href="create_student.html">👨‍🎓 Create Student</a>
         <a href="create_course.html">📚 Create Course</a>
         <a href="update_course.html">✏️ Update Course</a>
         <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
-        <a href="report_student_roster.html">📄 Student Roster</a>
-        <a href="report_enrollment_program.html">📊 By Program</a>
-        <a href="report_enrollment_semester.html">📅 By Semester</a>
-        <a href="report_course_enrollment.html">📘 Course Enrollment</a>
+        
+        <h3>Reports</h3>
+        <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+        <a class="sub-link active-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+
         <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
     </div>
+
     <div class="content">
-        <h1>Course Enrollment Report</h1>
+        <h1>Course & Section Overview</h1>
         <div class="filters">
-            <select id="programFilter">
-                <option value="">All Programs</option>
-                <option value="BTech">BTech</option>
-                <option value="BSc">BSc</option>
-                <option value="BA">BA</option>
-                <option value="BBA">BBA</option>
-            </select>
-            <select id="semesterFilter">
-                <option value="">All Semesters</option>
-                <option value="Fall2025">Fall2025</option>
-                <option value="Spring2026">Spring2026</option>
-                <option value="Summer2026">Summer2026</option>
-            </select>
             <select id="courseFilter">
                 <option value="">All Courses</option>
             </select>
             <button onclick="exportToExcel()">Export to CSV</button>
         </div>
-        <div id="totalCount">Total Enrollments: 0</div>
-        <table id="enrollmentTable">
+        <div id="totalCount">Total Sections: 0</div>
+
+        <div id="loader" class="loader-overlay"><div class="loader"></div></div>
+
+        <table id="sectionTable">
             <thead>
                 <tr>
-                    <th>Student ID</th><th>First Name</th><th>Last Name</th><th>Course ID</th><th>Course Name</th><th>Section</th>
+                    <th onclick="sortTable('Course_ID')">Course ID ▲▼</th>
+                    <th onclick="sortTable('course_name')">Course Name ▲▼</th>
+                    <th onclick="sortTable('section_number')">Section ▲▼</th>
+                    <th onclick="sortTable('capacity')">Capacity ▲▼</th>
+                    <th onclick="sortTable('enrolled')">Enrolled ▲▼</th>
+                    <th onclick="sortTable('strength')">Strength % ▲▼</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -67,6 +180,7 @@
 
     <script>
         let lastData = [];
+        let currentSort = { column: null, asc: true };
 
         function loadCourses() {
             fetch('/api/admin/all-courses')
@@ -79,61 +193,93 @@
                         opt.textContent = course.name;
                         courseSelect.appendChild(opt);
                     });
-                })
-                .catch(err => console.error("Error loading courses:", err));
+                });
         }
 
         function loadReport() {
-            const program = document.getElementById('programFilter').value;
-            const semester = document.getElementById('semesterFilter').value;
+            document.getElementById('loader').style.display = 'flex';
             const course = document.getElementById('courseFilter').value;
 
-            let url = `/api/admin/report-course-enrollment?`;
-            if (program) url += `program=${encodeURIComponent(program)}&`;
-            if (semester) url += `semester=${encodeURIComponent(semester)}&`;
+            let url = `/api/admin/course-section-status?`;
             if (course) url += `courseId=${encodeURIComponent(course)}&`;
 
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    lastData = data.enrollments;
-                    const tbody = document.querySelector("#enrollmentTable tbody");
-                    tbody.innerHTML = "";
-                    data.enrollments.forEach(e => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${e.Student_ID}</td>
-                                <td>${e.first_name}</td>
-                                <td>${e.last_name}</td>
-                                <td>${e.Course_ID}</td>
-                                <td>${e.course_name}</td>
-                                <td>${e.section_number}</td>
-                            </tr>
-                        `;
-                    });
-                    document.getElementById("totalCount").innerText = `Total Enrollments: ${data.enrollments.length}`;
+                    lastData = data.sections;
+                    renderTable(lastData);
+                    document.getElementById('loader').style.display = 'none';
                 })
-                .catch(err => console.error("Error:", err));
+                .catch(err => {
+                    console.error("Error:", err);
+                    document.getElementById('loader').style.display = 'none';
+                });
+        }
+
+        function renderTable(sections) {
+            const tbody = document.querySelector("#sectionTable tbody");
+            tbody.innerHTML = "";
+            sections.forEach(s => {
+                const strength = s.capacity > 0 ? ((s.enrolled / s.capacity) * 100).toFixed(1) + "%" : "N/A";
+                const enrolledDisplay = s.enrolled > 0 
+                    ? `<a class="enrolled-link" href="section_enrollments.html?sectionId=${s.section_id}">${s.enrolled}</a>` 
+                    : s.enrolled;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${s.Course_ID}</td>
+                        <td>${s.course_name}</td>
+                        <td>${s.section_number}</td>
+                        <td>${s.capacity}</td>
+                        <td>${enrolledDisplay}</td>
+                        <td>${strength}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById("totalCount").innerText = `Total Sections: ${sections.length}`;
+        }
+
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.asc = !currentSort.asc;
+            } else {
+                currentSort.column = column;
+                currentSort.asc = true;
+            }
+
+            let sortedData = [...lastData];
+            sortedData.sort((a, b) => {
+                let valA = column === "strength" ? (a.capacity ? a.enrolled / a.capacity : 0) : a[column];
+                let valB = column === "strength" ? (b.capacity ? b.enrolled / b.capacity : 0) : b[column];
+
+                if (typeof valA === "string") {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                return (valA < valB ? -1 : valA > valB ? 1 : 0) * (currentSort.asc ? 1 : -1);
+            });
+
+            renderTable(sortedData);
         }
 
         function exportToExcel() {
-            let csv = "Student ID,First Name,Last Name,Course ID,Course Name,Section\n";
-            lastData.forEach(e => {
-                csv += `${e.Student_ID},${e.first_name},${e.last_name},${e.Course_ID},${e.course_name},${e.section_number}\n`;
+            let csv = "Course ID,Course Name,Section,Capacity,Enrolled,Strength %\n";
+            lastData.forEach(s => {
+                const strength = s.capacity > 0 ? ((s.enrolled / s.capacity) * 100).toFixed(1) + "%" : "N/A";
+                csv += `${s.Course_ID},${s.course_name},${s.section_number},${s.capacity},${s.enrolled},${strength}\n`;
             });
 
             const blob = new Blob([csv], { type: "text/csv" });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "course_enrollment_report.csv";
+            a.download = "course_section_overview.csv";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
 
-        document.getElementById('programFilter').addEventListener('change', loadReport);
-        document.getElementById('semesterFilter').addEventListener('change', loadReport);
         document.getElementById('courseFilter').addEventListener('change', loadReport);
 
         loadCourses();

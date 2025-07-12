@@ -1,161 +1,250 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Create Student - Grand Lakes University</title>
+    <title>Create Student - GLU</title>
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
-        .sidebar { width: 220px; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding-top: 30px; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; }
-        .sidebar a { padding: 15px 20px; color: white; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover { background-color: #34495e; }
-        .logout-btn { margin-top: auto; padding: 15px 20px; background-color: #c0392b; text-align: center; cursor: pointer; }
-        .logout-btn:hover { background-color: #a93226; }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar h3 {
+            margin: 15px 20px 5px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s, padding-left 0.3s;
+            font-size: 14px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            padding-left: 25px;
+        }
+        .sidebar a.active-link {
+            background-color: #2980b9;
+            padding-left: 25px;
+        }
+        .sidebar .sub-link {
+            padding-left: 40px;
+            font-size: 13px;
+            color: #ecf0f1;
+        }
+        .sidebar .sub-link:hover {
+            background-color: #3d566e;
+            padding-left: 45px;
+        }
+        .sidebar .sub-link.active-link {
+            background-color: #2980b9;
+            padding-left: 45px;
+        }
+        .logout-btn {
+            margin-top: auto;
+            padding: 12px 20px;
+            background-color: #c0392b;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
         .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; }
-        .content h1 { color: #2c3e50; }
+        .content h1 { color: #2c3e50; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
-        input, select, button { padding: 10px; width: 90%; font-size: 15px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background-color: #27ae60; border: none; color: white; cursor: pointer; }
-        button:hover { background-color: #219150; }
-        .success-message {
+        input, select, button {
+            padding: 10px; width: 95%;
+            font-size: 15px; margin-top: 5px;
+            border-radius: 5px; border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db; border: none; color: white;
+            cursor: pointer; transition: background-color 0.3s;
+        }
+        button:hover { background-color: #2980b9; }
+        .success-message, .error-message {
             margin-top: 20px;
+            padding: 15px; border-radius: 6px; width: 95%;
+        }
+        .success-message {
             background-color: #eafaf1;
             border: 1px solid #27ae60;
-            padding: 15px;
-            border-radius: 6px;
             color: #27ae60;
-            width: 90%;
         }
         .error-message {
-            margin-top: 20px;
             background-color: #fcebea;
             border: 1px solid #e74c3c;
-            padding: 15px;
-            border-radius: 6px;
             color: #e74c3c;
-            width: 90%;
+        }
+        /* Loader styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <a href="create_student.html">👨‍🎓 Create Student</a>
-        <a href="create_course.html">📚 Create Course</a>
-        <a href="update_course.html">✏️ Update Course</a>
-        <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
-        <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+<div class="loader-overlay" id="pageLoader">
+    <div class="loader"></div>
+</div>
+
+<div class="sidebar">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2 style="margin: 5px 0 0 0; font-size: 20px; color: #ecf0f1;">GLU Admin</h2>
     </div>
 
-    <div class="content">
-        <h1>Create Student</h1>
-        <div class="form-group">
-            <input type="text" id="firstName" placeholder="First Name" required>
-        </div>
-        <div class="form-group">
-            <input type="text" id="lastName" placeholder="Last Name" required>
-        </div>
-        <div class="form-group">
-            <input type="email" id="email" placeholder="Email" required>
-        </div>
-        <div class="form-group">
-            <input type="password" id="password" placeholder="Password" required>
-        </div>
-        <div class="form-group">
-            <input type="date" id="dob" placeholder="Date of Birth" required>
-        </div>
-        <div class="form-group">
-            <input type="text" id="street" placeholder="Street Address">
-        </div>
-        <div class="form-group">
-            <input type="text" id="city" placeholder="City">
-        </div>
-        <div class="form-group">
-            <input type="text" id="province" placeholder="Province">
-        </div>
-        <div class="form-group">
-            <input type="text" id="postalCode" placeholder="Postal Code">
-        </div>
-        <div class="form-group">
-            <select id="program" required>
-                <option value="">Select Program</option>
-                <option value="BTech">BTech</option>
-                <option value="BSc">BSc</option>
-                <option value="BA">BA</option>
-                <option value="BBA">BBA</option>
-            </select>
-        </div>
-        <div class="form-group" style="display: flex; gap: 10px;">
-            <select id="term" style="flex: 1;" required>
-                <option value="">Term</option>
-                <option value="Fall">Fall</option>
-                <option value="Spring">Spring</option>
-                <option value="Summer">Summer</option>
-            </select>
-            <select id="year" style="flex: 1;" required>
-                <option value="">Year</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-                <option value="2027">2027</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <button type="button" onclick="createStudent()">Create Student</button>
-        </div>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a class="active-link" href="create_student.html">👨‍🎓 Create Student</a>
+    <a href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
 
-        <div id="result"></div>
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+
+    <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+</div>
+
+<div class="content">
+    <h1>Create Student</h1>
+    <div class="form-group"><input type="text" id="firstName" placeholder="First Name" required></div>
+    <div class="form-group"><input type="text" id="lastName" placeholder="Last Name" required></div>
+    <div class="form-group"><input type="email" id="email" placeholder="Email" required></div>
+    <div class="form-group"><input type="password" id="password" placeholder="Password" required></div>
+    <div class="form-group"><input type="date" id="dob" required></div>
+    <div class="form-group"><input type="text" id="street" placeholder="Street Address"></div>
+    <div class="form-group"><input type="text" id="city" placeholder="City"></div>
+    <div class="form-group"><input type="text" id="province" placeholder="Province"></div>
+    <div class="form-group"><input type="text" id="postalCode" placeholder="Postal Code"></div>
+    <div class="form-group">
+        <select id="program" required>
+            <option value="">Select Program</option>
+            <option value="BTech">BTech</option>
+            <option value="BSc">BSc</option>
+            <option value="BA">BA</option>
+            <option value="BBA">BBA</option>
+        </select>
     </div>
+    <div class="form-group" style="display: flex; gap: 10px;">
+        <select id="term" style="flex: 1;" required>
+            <option value="">Term</option>
+            <option value="Fall">Fall</option>
+            <option value="Spring">Spring</option>
+            <option value="Summer">Summer</option>
+        </select>
+        <select id="year" style="flex: 1;" required>
+            <option value="">Year</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <button type="button" onclick="createStudent()">Create Student</button>
+    </div>
+    <div id="result"></div>
+</div>
 
-    <script>
-        function createStudent() {
-            const data = {
-                first_name: document.getElementById('firstName').value.trim(),
-                last_name: document.getElementById('lastName').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                password: document.getElementById('password').value.trim(),
-                date_of_birth: document.getElementById('dob').value,
-                street: document.getElementById('street').value.trim(),
-                city: document.getElementById('city').value.trim(),
-                province: document.getElementById('province').value.trim(),
-                postal_code: document.getElementById('postalCode').value.trim(),
-                program: document.getElementById('program').value,
-                semester: `${document.getElementById('term').value}${document.getElementById('year').value}`
-            };
-
-            // Validate required fields
-            if (!data.first_name || !data.last_name || !data.email || !data.password || !data.date_of_birth || !data.program || !document.getElementById('term').value || !document.getElementById('year').value) {
-                document.getElementById('result').innerHTML = `<div class="error-message">⚠️ Please fill in all required fields.</div>`;
-                return;
-            }
-
-            fetch('/api/admin/create-student', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.student) {
-                    document.getElementById('result').innerHTML = `
-                        <div class="success-message">
-                            ✅ Student created successfully!<br>
-                            <strong>Student ID:</strong> ${data.student.student_id}<br>
-                            <strong>Name:</strong> ${data.student.first_name} ${data.student.last_name}<br>
-                            <strong>Email:</strong> ${data.student.email}<br>
-                            <strong>Program:</strong> ${data.student.program}<br>
-                            <strong>Semester:</strong> ${data.student.semester}
-                        </div>
-                    `;
-                } else {
-                    document.getElementById('result').innerHTML = `<div class="error-message">⚠️ ${data.message || "Error creating student."}</div>`;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('result').innerHTML = `<div class="error-message">⚠️ Error creating student.</div>`;
-            });
+<script>
+    // Highlight active sidebar link
+    const currentPath = window.location.pathname.split("/").pop();
+    const links = document.querySelectorAll('.sidebar a');
+    links.forEach(link => {
+        if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active-link");
         }
-    </script>
+    });
 
+    // Loader fade-out
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('pageLoader');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    function createStudent() {
+        const data = {
+            first_name: document.getElementById('firstName').value.trim(),
+            last_name: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value.trim(),
+            date_of_birth: document.getElementById('dob').value,
+            street: document.getElementById('street').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            province: document.getElementById('province').value.trim(),
+            postal_code: document.getElementById('postalCode').value.trim(),
+            program: document.getElementById('program').value,
+            semester: `${document.getElementById('term').value}${document.getElementById('year').value}`
+        };
+
+        if (!data.first_name || !data.last_name || !data.email || !data.password || !data.date_of_birth || !data.program || !document.getElementById('term').value || !document.getElementById('year').value) {
+            document.getElementById('result').innerHTML = `<div class="error-message">⚠️ Please fill in all required fields.</div>`;
+            return;
+        }
+
+        fetch('/api/admin/create-student', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.student) {
+                document.getElementById('result').innerHTML = `
+                    <div class="success-message">
+                        ✅ Student created successfully!<br>
+                        <strong>Student ID:</strong> ${data.student.student_id}<br>
+                        <strong>Name:</strong> ${data.student.first_name} ${data.student.last_name}<br>
+                        <strong>Email:</strong> ${data.student.email}<br>
+                        <strong>Program:</strong> ${data.student.program}<br>
+                        <strong>Semester:</strong> ${data.student.semester}
+                    </div>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `<div class="error-message">⚠️ ${data.message || "Error creating student."}</div>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('result').innerHTML = `<div class="error-message">⚠️ Error creating student.</div>`;
+        });
+    }
+</script>
 </body>
 </html>

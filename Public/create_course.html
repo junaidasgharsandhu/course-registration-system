@@ -3,54 +3,203 @@
 <head>
     <title>Create Course - Grand Lakes University</title>
     <style>
-        /* Same sidebar and form styles */
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
-        .sidebar { width: 220px; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding-top: 30px; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 20px; }
-        .sidebar a { padding: 15px 20px; color: white; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover { background-color: #34495e; }
-        .logout-btn { margin-top: auto; padding: 15px 20px; background-color: #c0392b; text-align: center; cursor: pointer; }
-        .logout-btn:hover { background-color: #a93226; }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar h3 {
+            margin: 15px 20px 5px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s, padding-left 0.3s;
+            font-size: 14px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            padding-left: 25px;
+        }
+        .sidebar a.active-link {
+            background-color: #2980b9;
+            padding-left: 25px;
+        }
+        .sidebar .sub-link {
+            padding-left: 40px;
+            font-size: 13px;
+            color: #ecf0f1;
+        }
+        .sidebar .sub-link:hover {
+            background-color: #3d566e;
+            padding-left: 45px;
+        }
+        .sidebar .sub-link.active-link {
+            background-color: #2980b9;
+            padding-left: 45px;
+        }
+        .logout-btn {
+            margin-top: auto;
+            padding: 12px 20px;
+            background-color: #c0392b;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
         .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; }
-        .content h1 { color: #2c3e50; }
+        .content h1 { color: #2c3e50; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
-        input, select, button { padding: 10px; width: 90%; font-size: 15px; margin-top: 5px; }
-        button { background-color: #27ae60; border: none; color: white; border-radius: 5px; cursor: pointer; }
-        button:hover { background-color: #219150; }
+        input, select, button {
+            padding: 10px; width: 95%;
+            font-size: 15px; margin-top: 5px;
+            border-radius: 5px; border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db; border: none; color: white;
+            cursor: pointer; transition: background-color 0.3s;
+        }
+        button:hover { background-color: #2980b9; }
+        /* Loader styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <a href="create_student.html">👨‍🎓 Create Student</a>
-        <a href="create_course.html">📚 Create Course</a>
-        <a href="update_course.html">✏️ Update Course</a>
-        <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
-        <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+<div class="loader-overlay" id="pageLoader">
+    <div class="loader"></div>
+</div>
+
+<div class="sidebar">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2 style="margin: 5px 0 0 0; font-size: 20px; color: #ecf0f1;">GLU Admin</h2>
     </div>
 
-    <div class="content">
-        <h1>Create Course</h1>
-        <form>
-            <div class="form-group">
-                <input type="text" placeholder="Course Name">
-            </div>
-            <div class="form-group">
-                <input type="text" placeholder="Description">
-            </div>
-            <div class="form-group">
-                <input type="number" placeholder="Credits">
-            </div>
-            <div class="form-group">
-                <input type="text" placeholder="Department">
-            </div>
-            <div class="form-group">
-                <input type="text" placeholder="Semester">
-            </div>
-            <button type="submit">Create Course</button>
-        </form>
-    </div>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+    <a class="active-link" href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
 
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+
+    <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+</div>
+
+<div class="content">
+    <h1>Create Course</h1>
+    <form onsubmit="submitCourse(event)">
+        <div class="form-group">
+            <input type="text" id="courseName" placeholder="Course Name" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="description" placeholder="Description" required>
+        </div>
+        <div class="form-group">
+            <input type="number" id="credits" placeholder="Credits" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="department" placeholder="Department" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="semester" placeholder="Semester (e.g., Fall2025)" required>
+        </div>
+        <button type="submit">Create Course</button>
+    </form>
+    <div id="result"></div>
+</div>
+
+<script>
+    // Highlight active sidebar link
+    const currentPath = window.location.pathname.split("/").pop();
+    const links = document.querySelectorAll('.sidebar a');
+    links.forEach(link => {
+        if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active-link");
+        }
+    });
+
+    // Loader fade-out
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('pageLoader');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    function submitCourse(e) {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('courseName').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            credits: document.getElementById('credits').value.trim(),
+            department: document.getElementById('department').value.trim(),
+            semester: document.getElementById('semester').value.trim()
+        };
+
+        if (!data.name || !data.description || !data.credits || !data.department || !data.semester) {
+            document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ Please fill in all fields.</div>`;
+            return;
+        }
+
+        fetch('/api/admin/create-course', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if (resp.success) {
+                document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#27ae60;">✅ Course created successfully!</div>`;
+            } else {
+                document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ ${resp.message || "Error creating course."}</div>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ Error creating course.</div>`;
+        });
+    }
+</script>
 </body>
 </html>
