@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt'); // Optional if you use hashed passwords later
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
@@ -58,81 +59,117 @@ app.get('/api/search', (req, res) => {
 
 // ---------------- Student Login Endpoint ---------------- //
 // ---------------- Student Login Endpoint ---------------- //
-app.post('/api/login/student', (req, res) => {
-    const { email, password } = req.body;
+app.post('/api/login/student', async (req, res) => {
+    const { email, password, 'g-recaptcha-response': captcha } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    const sql = "SELECT * FROM Student WHERE email = ?";
-    db.query(sql, [email], async (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Internal server error" });
+    if (!captcha) {
+        return res.status(400).json({ message: 'Please complete the reCAPTCHA.' });
+    }
+
+    const secretKey = "6LeJ6YYrAAAAAGQwd-JEUGw7JvqLMowl8Q2h8Ylf"; // 
+
+    try {
+        // Verify CAPTCHA with Google
+        const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`;
+        const response = await axios.post(verifyURL);
+        const data = response.data;
+
+        if (!data.success) {
+            return res.status(403).json({ message: 'Failed reCAPTCHA verification.' });
         }
 
-        if (results.length === 0) {
-            return res.status(401).json({ message: "Email not found." });
-        }
+        // Continue with login
+        const sql = "SELECT * FROM Student WHERE email = ?";
+        db.query(sql, [email], async (err, results) => {
+            if (err) {
+                console.error("Database error:", err);
+                return res.status(500).json({ error: "Internal server error" });
+            }
 
-        const user = results[0];
+            if (results.length === 0) {
+                return res.status(401).json({ message: "Email not found." });
+            }
 
-        // Uncomment below if using hashed passwords:
-        // const match = await bcrypt.compare(password, user.password);
-        // if (!match) {
-        //     return res.status(401).json({ message: "Invalid password." });
-        // }
+            const user = results[0];
 
-        if (password !== user.password) {
-            return res.status(401).json({ message: "Invalid password." });
-        }
+            // TODO: Use bcrypt for hashed passwords in production
+            if (password !== user.password) {
+                return res.status(401).json({ message: "Invalid password." });
+            }
 
-        // ✅ Save user info in session
-        req.session.userId = user.student_id;
-        req.session.role = 'student';
-        req.session.firstName = user.first_name;  // <-- this line fixes it
+            // ✅ Save user session
+            req.session.userId = user.student_id;
+            req.session.role = 'student';
+            req.session.firstName = user.first_name;
 
-        res.json({ message: "Login successful", studentId: user.student_id, firstName: user.first_name });
-    });
+            res.json({
+                message: "Login successful",
+                studentId: user.student_id,
+                firstName: user.first_name
+            });
+        });
+
+    } catch (error) {
+        console.error("reCAPTCHA error:", error);
+        return res.status(500).json({ message: 'reCAPTCHA verification failed.' });
+    }
 });
 
 // ---------------- Admin Login Endpoint ---------------- //
-app.post('/api/login/admin', (req, res) => {
-    const { email, password } = req.body;
+app.post('/api/login/admin', async (req, res) => {
+    const { email, password, 'g-recaptcha-response': captcha } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    const sql = "SELECT * FROM Admin WHERE email = ?";
-    db.query(sql, [email], async (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Internal server error" });
+    if (!captcha) {
+        return res.status(400).json({ message: 'Please complete the reCAPTCHA.' });
+    }
+
+    const secretKey = "6LeJ6YYrAAAAAGQwd-JEUGw7JvqLMowl8Q2h8Ylf"; // Replace with your actual reCAPTCHA secret key
+
+    try {
+        const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`;
+        const response = await axios.post(verifyURL);
+        const data = response.data;
+
+        if (!data.success) {
+            return res.status(403).json({ message: 'Failed reCAPTCHA verification.' });
         }
 
-        if (results.length === 0) {
-            return res.status(401).json({ message: "Email not found." });
-        }
+        // Continue with login
+        const sql = "SELECT * FROM Admin WHERE email = ?";
+        db.query(sql, [email], async (err, results) => {
+            if (err) {
+                console.error("Database error:", err);
+                return res.status(500).json({ error: "Internal server error" });
+            }
 
-        const admin = results[0];
+            if (results.length === 0) {
+                return res.status(401).json({ message: "Email not found." });
+            }
 
-        // Uncomment below if using hashed passwords:
-        // const match = await bcrypt.compare(password, admin.password);
-        // if (!match) {
-        //     return res.status(401).json({ message: "Invalid password." });
-        // }
+            const admin = results[0];
 
-        if (password !== admin.password) {
-            return res.status(401).json({ message: "Invalid password." });
-        }
+            if (password !== admin.password) {
+                return res.status(401).json({ message: "Invalid password." });
+            }
 
-        // Save admin info in session
-        req.session.userId = admin.admin_id;
-        req.session.role = 'admin';
-        res.json({ message: "Login successful" });
-    });
+            req.session.userId = admin.admin_id;
+            req.session.role = 'admin';
+
+            res.json({ message: "Login successful" });
+        });
+
+    } catch (error) {
+        console.error("reCAPTCHA error:", error);
+        return res.status(500).json({ message: 'reCAPTCHA verification failed.' });
+    }
 });
 
 // ---------------- View Course Enrollment Endpoint ---------------- //

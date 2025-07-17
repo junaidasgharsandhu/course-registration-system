@@ -89,6 +89,12 @@
             text-decoration: none;
             transition: all 0.3s ease;
         }
+        .captcha-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+     } 
+
         .back-btn:hover {
             background-color: #3498db;
             color: white;
@@ -107,38 +113,59 @@
         <form onsubmit="loginStudent(event)">
             <input type="email" id="email" placeholder="Email" required><br>
             <input type="password" id="password" placeholder="Password" required><br>
-            <button type="submit">Login</button>
+            
+            <div class="captcha-wrapper">
+            <div class="g-recaptcha" data-sitekey="6LeJ6YYrAAAAACJSQBmJPbWFQ7mbp3oT-6-uk-2M"></div>
+            </div>
+
+            <button type="submit">Login</button><br><br>
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
         </form>
+
 
         <div id="result"></div>
         <a href="index.html" class="back-btn">← Back to Home</a>
     </div>
 
     <script>
-        function loginStudent(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const resultDiv = document.getElementById('result');
+    function loginStudent(e) {
+        e.preventDefault();
 
-            fetch('/api/login/student', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message === "Login successful") {
-                    window.location.href = "student_dashboard.html";
-                } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                resultDiv.innerHTML = "<div class='error'>⚠️ Error during login.</div>";
-            });
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const captchaToken = grecaptcha.getResponse(); // 🔐 This is the missing line
+        const resultDiv = document.getElementById('result');
+
+        if (!captchaToken) {
+            resultDiv.innerHTML = "<div class='error'>⚠️ Please complete the reCAPTCHA.</div>";
+            return;
         }
-    </script>
+
+        fetch('/api/login/student', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                'g-recaptcha-response': captchaToken // ✅ Send token in body
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "Login successful") {
+                window.location.href = "student_dashboard.html";
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                grecaptcha.reset(); // 🌀 Reset CAPTCHA after error
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            resultDiv.innerHTML = "<div class='error'>⚠️ Error during login.</div>";
+            grecaptcha.reset(); // 🌀 Reset CAPTCHA after error
+        });
+    }
+</script>
 </body>
 </html>

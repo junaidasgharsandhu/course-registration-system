@@ -44,6 +44,9 @@
             margin-bottom: 25px;
             color: #2c3e50;
         }
+        .G-recaptcha {
+            margin: 20px 0; 
+        }
         input {
             width: 85%;
             padding: 12px;
@@ -72,6 +75,12 @@
             color: red;
             margin-top: 15px;
         }
+        .captcha-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+}
+
         .back-btn {
             display: inline-block;
             margin-top: 20px;
@@ -107,38 +116,60 @@
         <form onsubmit="loginAdmin(event)">
             <input type="email" id="email" placeholder="Email" required><br>
             <input type="password" id="password" placeholder="Password" required><br>
-            <button type="submit">Login</button>
+            
+             <div class="captcha-wrapper">
+             <div class="g-recaptcha" data-sitekey="6LeJ6YYrAAAAACJSQBmJPbWFQ7mbp3oT-6-uk-2M"></div>
+             </div>
+
+            <button type="submit">Login</button><br><br>
+             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
         </form>
 
+        
         <div id="result"></div>
         <a href="index.html" class="back-btn">← Back to Home</a>
     </div>
 
     <script>
-        function loginAdmin(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const resultDiv = document.getElementById('result');
+    function loginAdmin(e) {
+        e.preventDefault();
 
-            fetch('/api/login/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message === "Login successful") {
-                    window.location.href = "admin_dashboard.html";
-                } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                resultDiv.innerHTML = "<div class='error'>⚠️ Error during login.</div>";
-            });
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const captchaToken = grecaptcha.getResponse(); // ✅ Get CAPTCHA token
+        const resultDiv = document.getElementById('result');
+
+        if (!captchaToken) {
+            resultDiv.innerHTML = "<div class='error'>⚠️ Please complete the reCAPTCHA.</div>";
+            return;
         }
-    </script>
+
+        fetch('/api/login/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                'g-recaptcha-response': captchaToken // ✅ Send CAPTCHA token
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "Login successful") {
+                window.location.href = "admin_dashboard.html";
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                grecaptcha.reset(); // 🔄 Reset CAPTCHA after failure
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            resultDiv.innerHTML = "<div class='error'>⚠️ Error during login.</div>";
+            grecaptcha.reset(); // 🔄 Reset CAPTCHA on error
+        });
+    }
+</script>
+
 </body>
 </html>
