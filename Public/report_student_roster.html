@@ -1,134 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Roster Report - GLU</title>
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
-        .sidebar {
-            width: 220px;
-            background-color: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding-top: 20px;
-        }
-        .sidebar h3 {
-            margin: 15px 20px 5px;
-            font-size: 14px;
-            color: #bdc3c7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .sidebar a {
-            padding: 12px 20px;
-            color: white;
-            text-decoration: none;
-            display: block;
-            transition: background 0.3s, padding-left 0.3s;
-            font-size: 14px;
-        }
-        .sidebar a:hover {
-            background-color: #34495e;
-            padding-left: 25px;
-        }
-        .sidebar a.active-link {
-            background-color: #2980b9;
-            padding-left: 25px;
-        }
-        .sidebar .sub-link {
-            padding-left: 40px;
-            font-size: 13px;
-            color: #ecf0f1;
-        }
-        .sidebar .sub-link:hover {
-            background-color: #3d566e;
-            padding-left: 45px;
-        }
-        .sidebar .sub-link.active-link {
-            background-color: #2980b9;
-            padding-left: 45px;
-        }
-        .logout-btn {
-            margin-top: auto;
-            padding: 12px 20px;
-            background-color: #c0392b;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .logout-btn:hover {
-            background-color: #a93226;
-        }
-        .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; position: relative; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #3498db; color: white; }
-        .filters { margin-bottom: 20px; }
-        select, input, button { padding: 8px; margin-right: 10px; font-size: 14px; }
-        #totalCount { margin-bottom: 10px; font-weight: bold; }
-        a.enroll-link { color: #3498db; text-decoration: none; }
-        a.enroll-link:hover { text-decoration: underline; }
+  <meta charset="utf-8"/>
+  <title>Student Roster Report - GLU</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background-color: #2c3e50; color: white;
+      display: flex; flex-direction: column; padding-top: 20px;
+    }
+    .sidebar h3 {
+      margin: 15px 20px 5px; font-size: 14px;
+      color: #bdc3c7; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .sidebar a {
+      padding: 12px 20px; color: white; text-decoration: none;
+      display: block; transition: background 0.3s, padding-left 0.3s;
+      font-size: 14px;
+    }
+    .sidebar a:hover { background-color: #34495e; padding-left: 25px; }
+    .sidebar a.active-link { background-color: #2980b9; padding-left: 25px; }
+    .sidebar .sub-link {
+      padding-left: 40px; font-size: 13px; color: #ecf0f1;
+    }
+    .sidebar .sub-link:hover {
+      background-color: #3d566e; padding-left: 45px;
+    }
+    .sidebar .sub-link.active-link {
+      background-color: #2980b9; padding-left: 45px;
+    }
+    .logout-btn {
+      margin-top: auto; padding: 12px 20px;
+      background-color: #c0392b; text-align: center;
+      cursor: pointer; transition: background-color 0.3s;
+    }
+    .logout-btn:hover { background-color: #a93226; }
 
-        /* Loader overlay */
-        .loader-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-        }
-        .loader {
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* Content */
+    .content {
+      flex: 1; padding: 40px; background-color: #f4f6f8;
+      overflow-y: auto; position: relative;
+    }
+    .filters {
+      margin-bottom: 20px;
+    }
+    select, input, button {
+      padding: 8px; margin-right: 10px; font-size: 14px;
+    }
+    #totalCount {
+      margin-bottom: 10px; font-weight: bold;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 20px; background: white;
+    }
+    th, td {
+      border: 1px solid #ddd; padding: 8px; text-align: left;
+    }
+    th { background-color: #3498db; color: white; }
+    a.enroll-link {
+      color: #3498db; text-decoration: none;
+    }
+    a.enroll-link:hover { text-decoration: underline; }
 
-        /* Modal styles */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 50%;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-btn:hover,
-        .close-btn:focus {
-            color: #000;
-            text-decoration: none;
-        }
-        #courseList {
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-    </style>
+    /* Loader */
+    .loader-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.7);
+      display: none; justify-content: center; align-items: center;
+      z-index: 999;
+    }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 50px; height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Modal */
+    .modal {
+      display: none; position: fixed; z-index: 1000;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fff; margin: 10% auto; padding: 20px;
+      border: 1px solid #888; width: 50%;
+      border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .close-btn {
+      color: #aaa; float: right; font-size: 28px;
+      font-weight: bold; cursor: pointer;
+    }
+    .close-btn:hover,
+    .close-btn:focus {
+      color: #000; text-decoration: none;
+    }
+    #courseList {
+      list-style-type: disc; padding-left: 20px;
+    }
+
+    /* Pagination */
+    #pagination {
+      margin: 20px 0; text-align: center;
+    }
+    #pagination button {
+      padding: 6px 12px; margin: 0 4px; font-size: 14px;
+      border: 1px solid #3498db; background: white;
+      color: #3498db; border-radius: 4px; cursor: pointer;
+    }
+    #pagination button.disabled {
+      opacity: 0.5; cursor: default;
+    }
+    #pagination span {
+      margin: 0 8px; font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-
-
-
-      <div class="sidebar">
+  <!-- Sidebar -->
+  <div class="sidebar">
     <div style="text-align:center; margin-bottom:20px;">
       <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none">
         <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
@@ -136,207 +134,207 @@
       </svg>
       <h2 style="margin:5px 0;font-size:20px;color:#ecf0f1;">GLU Admin</h2>
     </div>
-    <a href="admin_dashboard.html" >🏠 Dashboard</a>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
     <h3>Manage</h3>
     <a href="create_student.html">👨‍🎓 Create Student</a>
-     <a href="update_student.html">🔍 Manage Students</a>
+    <a href="update_student.html" class="active-link">🔍 Manage Students</a>
     <a href="create_course.html">📚 Create Course</a>
     <a href="update_course.html">✏️ Update Course</a>
     <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
     <a href="manage_instructor.html">🛠️ Manage Instructors</a>
     <h3>Reports</h3>
-    <a class="sub-link" href="report_student_roster.html" class="active-link">📄 Student Roster</a>
+    <a class="sub-link active-link" href="report_student_roster.html">📄 Student Roster</a>
     <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
     <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
   </div>
 
-
-    <div class="content">
-        <h1>Student Roster Report</h1>
-        <div class="filters">
-            <select id="programFilter">
-                <option value="">All Programs</option>
-                <option value="BTech">BTech</option>
-                <option value="BSc">BSc</option>
-                <option value="BA">BA</option>
-                <option value="BBA">BBA</option>
-            </select>
-            <select id="semesterFilter">
-                <option value="">All Semesters</option>
-                <option value="Fall2025">Fall2025</option>
-                <option value="Spring2026">Spring2026</option>
-                <option value="Summer2026">Summer2026</option>
-            </select>
-            <select id="courseFilter">
-                <option value="">All Courses</option>
-            </select>
-            <input type="text" id="searchInput" placeholder="Search name or email">
-            <button onclick="loadReport()">Apply</button>
-            <button onclick="exportToExcel()">Export to Excel</button>
-        </div>
-        <div id="totalCount">Total Students: 0</div>
-
-        <div id="loader" class="loader-overlay"><div class="loader"></div></div>
-
-        <table id="studentTable">
-            <thead>
-                <tr>
-                    <th>ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Program</th><th>Semester</th><th>Enrollments</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+  <!-- Main Content -->
+  <div class="content">
+    <h1>Student Roster Report</h1>
+    <div class="filters">
+      <select id="programFilter">
+        <option value="">All Programs</option>
+        <option value="BTech">BTech</option>
+        <option value="BSc">BSc</option>
+        <option value="BA">BA</option>
+        <option value="BBA">BBA</option>
+      </select>
+      <select id="semesterFilter">
+        <option value="">All Semesters</option>
+        <option value="Fall2025">Fall2025</option>
+        <option value="Spring2026">Spring2026</option>
+        <option value="Summer2026">Summer2026</option>
+      </select>
+      <select id="courseFilter">
+        <option value="">All Courses</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Search name or email"/>
+      <button onclick="loadReport(1)">Apply</button>
+      <button onclick="exportToExcel()">Export to Excel</button>
     </div>
 
-    <!-- Modal HTML -->
-    <div id="courseModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h3 id="modalTitle">Courses</h3>
-            <ul id="courseList"></ul>
-        </div>
+    <div id="totalCount">Total Students: 0</div>
+    <div id="loader" class="loader-overlay"><div class="loader"></div></div>
+
+    <table id="studentTable">
+      <thead>
+        <tr>
+          <th>ID</th><th>First Name</th><th>Last Name</th>
+          <th>Email</th><th>Program</th><th>Semester</th><th>Enrollments</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div id="pagination"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="courseModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h3 id="modalTitle">Courses</h3>
+      <ul id="courseList"></ul>
     </div>
+  </div>
 
-    <script>
-        const currentPath = window.location.pathname.split("/").pop();
-        const links = document.querySelectorAll('.sidebar a');
-        links.forEach(link => {
-            if (link.getAttribute("href") === currentPath) {
-                link.classList.add("active-link");
-            }
+  <script>
+    let lastData = [], currentPage = 1, totalPages = 1;
+
+    function loadCourses() {
+      fetch('/api/admin/all-courses')
+        .then(r=>r.json())
+        .then(d=>{
+          const sel = document.getElementById('courseFilter');
+          d.courses.forEach(c=>{
+            const o = document.createElement('option');
+            o.value = c.Course_ID;
+            o.textContent = c.name;
+            sel.appendChild(o);
+          });
         });
+    }
 
-        let lastData = [];
+    function loadReport(page=1) {
+      currentPage = page;
+      document.getElementById('loader').style.display = 'flex';
 
-        function loadCourses() {
-            fetch('/api/admin/all-courses')
-                .then(res => res.json())
-                .then(data => {
-                    const courseSelect = document.getElementById('courseFilter');
-                    data.courses.forEach(course => {
-                        const opt = document.createElement("option");
-                        opt.value = course.Course_ID;
-                        opt.textContent = course.name;
-                        courseSelect.appendChild(opt);
-                    });
-                });
-        }
+      const params = new URLSearchParams();
+      const prog = document.getElementById('programFilter').value;
+      const sem  = document.getElementById('semesterFilter').value;
+      const crs  = document.getElementById('courseFilter').value;
+      const srch = document.getElementById('searchInput').value.trim();
 
-        function loadReport() {
-            document.getElementById('loader').style.display = 'flex';
+      if (prog) params.append('program', prog);
+      if (sem)  params.append('semester', sem);
+      if (crs)  params.append('courseId', crs);
+      if (srch) params.append('search', srch);
+      params.append('page', page);
 
-            const program = document.getElementById('programFilter').value;
-            const semester = document.getElementById('semesterFilter').value;
-            const course = document.getElementById('courseFilter').value;
-            const search = document.getElementById('searchInput').value;
-
-            let url = `/api/admin/report-student-roster?`;
-            if (program) url += `program=${encodeURIComponent(program)}&`;
-            if (semester) url += `semester=${encodeURIComponent(semester)}&`;
-            if (course) url += `courseId=${encodeURIComponent(course)}&`;
-            if (search) url += `search=${encodeURIComponent(search)}&`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    lastData = data.students;
-                    renderTable().then(() => {
-                        document.getElementById('loader').style.display = 'none';
-                    });
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    document.getElementById('loader').style.display = 'none';
-                });
-        }
-
-        async function renderTable() {
-            const tbody = document.querySelector("#studentTable tbody");
-            tbody.innerHTML = "";
-
-            for (const s of lastData) {
-                const res = await fetch(`/api/admin/student-courses/${s.student_id}`);
-                const courseData = await res.json();
-                const count = courseData.courses.length;
-
-                const enrollText = count > 0 
-                    ? `<a href="#" class="enroll-link" onclick="showCourses(${s.student_id}, '${s.first_name} ${s.last_name}'); return false;">${count}</a>`
-                    : "0";
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${s.student_id}</td>
-                        <td>${s.first_name}</td>
-                        <td>${s.last_name}</td>
-                        <td>${s.email}</td>
-                        <td>${s.program}</td>
-                        <td>${s.semester}</td>
-                        <td>${enrollText}</td>
-                    </tr>
-                `;
-            }
-
-            document.getElementById("totalCount").innerText = `Total Students: ${lastData.length}`;
-        }
-
-        function exportToExcel() {
-            let csv = "ID,First Name,Last Name,Email,Program,Semester\n";
-            lastData.forEach(s => {
-                csv += `${s.student_id},${s.first_name},${s.last_name},${s.email},${s.program},${s.semester}\n`;
-            });
-
-            const blob = new Blob([csv], { type: "text/csv" });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "student_roster_report.csv";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function showCourses(studentId, studentName) {
-            fetch(`/api/admin/student-courses/${studentId}`)
-                .then(res => res.json())
-                .then(data => {
-                    const modal = document.getElementById("courseModal");
-                    const modalTitle = document.getElementById("modalTitle");
-                    const courseList = document.getElementById("courseList");
-                    
-                    modalTitle.textContent = `Courses for ${studentName}`;
-                    courseList.innerHTML = "";
-
-                    if (data.courses.length === 0) {
-                        courseList.innerHTML = "<li>No courses enrolled.</li>";
-                    } else {
-                        data.courses.forEach(course => {
-                            const li = document.createElement("li");
-                            li.textContent = `${course.course_name} (Course ID: ${course.Course_ID}, Section: ${course.section_number})`;
-                            courseList.appendChild(li);
-                        });
-                    }
-
-                    modal.style.display = "block";
-                })
-                .catch(err => {
-                    console.error("Error fetching courses:", err);
-                    alert("Error loading courses. Please try again.");
-                });
-        }
-
-        function closeModal() {
-            document.getElementById("courseModal").style.display = "none";
-        }
-
-        document.getElementById('programFilter').addEventListener('change', loadReport);
-        document.getElementById('semesterFilter').addEventListener('change', loadReport);
-        document.getElementById('courseFilter').addEventListener('change', loadReport);
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') loadReport();
+      fetch('/api/admin/report-student-roster?' + params.toString())
+        .then(r=>r.json())
+        .then(d=>{
+          lastData   = d.students;
+          totalPages = d.totalPages;
+          renderTable();
+          renderPagination();
+        })
+        .catch(console.error)
+        .finally(()=>{
+          document.getElementById('loader').style.display = 'none';
         });
+    }
 
-        loadCourses();
-        loadReport();
-    </script>
+    async function renderTable() {
+      const tbody = document.querySelector('#studentTable tbody');
+      tbody.innerHTML = '';
+      for (const s of lastData) {
+        const cr = await fetch(`/api/admin/student-courses/${s.student_id}`)
+                          .then(r=>r.json());
+        const cnt = cr.courses.length;
+        const link = cnt
+          ? `<a href="#" class="enroll-link"
+               onclick="showCourses(${s.student_id},'${s.first_name} ${s.last_name}');return false;">
+             ${cnt}</a>`
+          : '0';
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${s.student_id}</td>
+            <td>${s.first_name}</td>
+            <td>${s.last_name}</td>
+            <td>${s.email}</td>
+            <td>${s.program}</td>
+            <td>${s.semester}</td>
+            <td>${link}</td>
+          </tr>
+        `);
+      }
+      document.getElementById('totalCount').textContent =
+        `Total Students: ${lastData.length}`;
+    }
+
+    function renderPagination() {
+      const pg = document.getElementById('pagination');
+      pg.innerHTML = '';
+      if (totalPages <= 1) return;
+
+      const prev = document.createElement('button');
+      prev.textContent = '‹ Prev';
+      if (currentPage === 1) prev.classList.add('disabled');
+      else prev.onclick = () => loadReport(currentPage - 1);
+
+      const next = document.createElement('button');
+      next.textContent = 'Next ›';
+      if (currentPage === totalPages) next.classList.add('disabled');
+      else next.onclick = () => loadReport(currentPage + 1);
+
+      const info = document.createElement('span');
+      info.textContent = `Page ${currentPage} of ${totalPages}`;
+
+      pg.appendChild(prev);
+      pg.appendChild(info);
+      pg.appendChild(next);
+    }
+
+    function exportToExcel() {
+      let csv = 'ID,First,Last,Email,Program,Semester\n';
+      lastData.forEach(s => {
+        csv += [s.student_id, s.first_name, s.last_name, s.email, s.program, s.semester]
+               .map(v => `"${v}"`).join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'student_roster.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function showCourses(id, name) {
+      fetch(`/api/admin/student-courses/${id}`)
+        .then(r=>r.json())
+        .then(d=>{
+          document.getElementById('modalTitle').textContent = `Courses for ${name}`;
+          const ul = document.getElementById('courseList');
+          ul.innerHTML = '';
+          if (!d.courses.length) ul.innerHTML = '<li>No courses enrolled.</li>';
+          else d.courses.forEach(c=>{
+            const li = document.createElement('li');
+            li.textContent = `${c.course_name} (ID:${c.Course_ID}, Sec:${c.section_number})`;
+            ul.appendChild(li);
+          });
+          document.getElementById('courseModal').style.display = 'block';
+        });
+    }
+    function closeModal() {
+      document.getElementById('courseModal').style.display = 'none';
+    }
+
+    // init
+    loadCourses();
+    loadReport(1);
+  </script>
 </body>
 </html>

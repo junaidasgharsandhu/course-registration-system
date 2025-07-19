@@ -182,44 +182,60 @@
 </div>
 
 <script>
+    function toISODate(raw) {
+        if (!raw) return '';
+        // if comes as "YYYY-MM-DD..." or "YYYY-MM-DD"
+        if (raw.includes('T') || raw.includes(' ')) {
+            return raw.split(/T| /)[0];
+        }
+        // if comes as "MM/DD/YYYY"
+        if (raw.includes('/')) {
+            const [m,d,y] = raw.split('/');
+            return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+        }
+        // assume already "YYYY-MM-DD"
+        return raw;
+    }
+
     function loadProfile() {
         fetch('/api/student/profile')
             .then(res => res.json())
             .then(data => {
-                if (data.student) {
-                    const s = data.student;
-                    document.getElementById('firstName').value = s.first_name;
-                    document.getElementById('lastName').value = s.last_name;
-                    document.getElementById('dob').value = s.date_of_birth;
-                    document.getElementById('street').value = s.street || "";
-                    document.getElementById('city').value = s.city || "";
-                    document.getElementById('province').value = s.province || "";
-                    document.getElementById('postalCode').value = s.postal_code || "";
-                    document.getElementById('email').value = s.email;
-                    document.getElementById('program').value = s.program;
-                    document.getElementById('semester').value = s.semester;
-                }
+                const s = data.student;
+                if (!s) return;
+                document.getElementById('firstName').value = s.first_name;
+                document.getElementById('lastName').value  = s.last_name;
+                document.getElementById('dob').value       = toISODate(s.date_of_birth);
+                document.getElementById('street').value    = s.street     || "";
+                document.getElementById('city').value      = s.city       || "";
+                document.getElementById('province').value  = s.province   || "";
+                document.getElementById('postalCode').value= s.postal_code|| "";
+                document.getElementById('email').value     = s.email;
+                document.getElementById('program').value   = s.program;
+                document.getElementById('semester').value  = s.semester;
             })
             .catch(err => console.error("Error loading profile:", err));
     }
 
     function updateProfile() {
-        const data = {
-            street: document.getElementById('street').value,
-            city: document.getElementById('city').value,
-            province: document.getElementById('province').value,
+        const payload = {
+            street:      document.getElementById('street').value,
+            city:        document.getElementById('city').value,
+            province:    document.getElementById('province').value,
             postal_code: document.getElementById('postalCode').value,
-            email: document.getElementById('email').value,
+            email:       document.getElementById('email').value
         };
 
         fetch('/api/student/update-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
         .then(res => res.json())
-        .then(data => {
-            document.getElementById('message').innerHTML = data.message ? `✅ ${data.message}` : "❌ Error updating profile.";
+        .then(resp => {
+            document.getElementById('message').innerHTML = resp.message
+                ? `✅ ${resp.message}`
+                : `❌ Update failed.`;
         })
         .catch(err => {
             console.error("Error updating profile:", err);

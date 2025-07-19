@@ -925,33 +925,58 @@ app.post('/api/admin/create-student', async (req, res) => {
 // --- Search students ---
 // --- Search students by ID, first name, last name or email ---
 // --- Search students by any field (q) ---
+// --- SEARCH STUDENTS (with pagination) ---
 app.get('/api/admin/search-students', (req, res) => {
   const q = req.query.q?.trim();
-  if (!q) {
-    return res.status(400).json({ message: 'Query (q) is required.' });
-  }
+  if (!q) return res.status(400).json({ message: 'Query (q) is required.' });
 
-  // We'll search ID exactly, and name/email via LIKE
-  const sql = `
-    SELECT student_id, first_name, last_name, email
+  const page     = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const pageSize = 20;
+  const offset   = (page - 1) * pageSize;
+  const likeQ    = `%${q}%`;
+
+  // 1) count total matching
+  const countSql = `
+    SELECT COUNT(*) AS total
       FROM Student
      WHERE student_id = ?
         OR first_name LIKE ?
-        OR last_name LIKE ?
-        OR email LIKE ?
-     ORDER BY student_id
-     LIMIT 100
+        OR last_name  LIKE ?
+        OR email      LIKE ?
   `;
-  const likeQ = `%${q}%`;
-
-  db.query(sql, [ q, likeQ, likeQ, likeQ ], (err, rows) => {
-    if (err) {
-      console.error('Search students error:', err);
+  db.query(countSql, [ q, likeQ, likeQ, likeQ ], (cntErr, cntRows) => {
+    if (cntErr) {
+      console.error('Search count error:', cntErr);
       return res.status(500).json({ message: 'Server error.' });
     }
-    res.json({ students: rows });
+    const total      = cntRows[0].total;
+    const totalPages = Math.ceil(total / pageSize);
+
+    // 2) fetch this page
+    const dataSql = `
+      SELECT student_id, first_name, last_name, email, program, semester
+        FROM Student
+       WHERE student_id = ?
+          OR first_name LIKE ?
+          OR last_name  LIKE ?
+          OR email      LIKE ?
+       ORDER BY student_id
+       LIMIT ? OFFSET ?
+    `;
+    db.query(
+      dataSql,
+      [ q, likeQ, likeQ, likeQ, pageSize, offset ],
+      (dataErr, rows) => {
+        if (dataErr) {
+          console.error('Search data error:', dataErr);
+          return res.status(500).json({ message: 'Server error.' });
+        }
+        res.json({ students: rows, page, pageSize, total, totalPages });
+      }
+    );
   });
 });
+
 
 
 
@@ -1343,40 +1368,77 @@ app.post('/api/admin/delete-instructor', (req, res) => {
 
 //Reports Section: 
 
+// --- REPORT STUDENT ROSTER (with pagination) ---
 app.get('/api/admin/report-student-roster', (req, res) => {
-    let sql = "SELECT student_id, first_name, last_name, email, program, semester FROM Student WHERE 1=1";
-    const params = [];
+  const program  = req.query.program;
+  const semester = req.query.semester;
+  const courseId = req.query.courseId;
+  const search   = req.query.search;
+  const page     = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const pageSize = 20;
+  const offset   = (page - 1) * pageSize;
 
-    if (req.query.program) {
-        sql += " AND program = ?";
-        params.push(req.query.program);
+  const whereClauses = [];
+  const params       = [];
+
+  if (program) {
+    whereClauses.push(`program = ?`);
+    params.push(program);
+  }
+  if (semester) {
+    whereClauses.push(`semester = ?`);
+    params.push(semester);
+  }
+  if (courseId) {
+    whereClauses.push(`student_id IN (SELECT Student_ID FROM Course_Enrollment WHERE Course_ID = ?)`);
+    params.push(courseId);
+  }
+  if (search) {
+    whereClauses.push(`(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)`);
+    const likeS = `%${search}%`;
+    params.push(likeS, likeS, likeS);
+  }
+
+  const whereSQL = whereClauses.length
+    ? `WHERE ` + whereClauses.join(' AND ')
+    : '';
+
+  // 1) count total
+  const countSql = `
+    SELECT COUNT(*) AS total
+      FROM Student
+    ${whereSQL}
+  `;
+  db.query(countSql, params, (cntErr, cntRows) => {
+    if (cntErr) {
+      console.error('Roster count error:', cntErr);
+      return res.status(500).json({ message: 'Server error.' });
     }
+    const total      = cntRows[0].total;
+    const totalPages = Math.ceil(total / pageSize);
 
-    if (req.query.semester) {
-        sql += " AND semester = ?";
-        params.push(req.query.semester);
-    }
-
-    if (req.query.courseId) {
-        sql += " AND student_id IN (SELECT Student_ID FROM Course_Enrollment WHERE Course_ID = ?)";
-        params.push(req.query.courseId);
-    }
-
-    if (req.query.search) {
-        sql += " AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)";
-        params.push(`%${req.query.search}%`, `%${req.query.search}%`, `%${req.query.search}%`);
-    }
-
-    sql += " ORDER BY student_id";
-
-    db.query(sql, params, (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ message: "Internal server error." });
+    // 2) fetch page
+    const dataSql = `
+      SELECT student_id, first_name, last_name, email, program, semester
+        FROM Student
+      ${whereSQL}
+      ORDER BY student_id
+      LIMIT ? OFFSET ?
+    `;
+    db.query(
+      dataSql,
+      [...params, pageSize, offset],
+      (dataErr, rows) => {
+        if (dataErr) {
+          console.error('Roster data error:', dataErr);
+          return res.status(500).json({ message: 'Server error.' });
         }
-        res.json({ students: results });
-    });
+        res.json({ students: rows, page, pageSize, total, totalPages });
+      }
+    );
+  });
 });
+
 
 app.get('/api/admin/all-courses', (req, res) => {
     const sql = "SELECT Course_ID, name FROM Course ORDER BY name";
