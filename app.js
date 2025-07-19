@@ -801,6 +801,545 @@ app.get('/api/admin/section-overview', (req, res) => {
 });
 
 
+//Admin Manage Section
+
+
+
+// Create Student 
+
+// ----------------------
+// Create Student API
+// ----------------------
+app.post('/api/admin/create-student', async (req, res) => {
+  const {
+    first_name,
+    last_name,
+    email,
+    password,
+    date_of_birth,
+    street,
+    city,
+    province,
+    postal_code,
+    program,
+    semester
+  } = req.body;
+
+  // 1) Validate required
+  if (
+    !first_name || !last_name ||
+    !email || !password ||
+    !date_of_birth || !program ||
+    !semester
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please fill in all required fields.'
+    });
+  }
+
+  // 2) Duplicate-email check
+  db.query(
+    'SELECT COUNT(*) AS cnt FROM Student WHERE email = ?',
+    [email],
+    async (err, rows) => {
+      if (err) {
+        console.error('Email check error:', err);
+        return res.status(500).json({ success: false, message: 'Server error.' });
+      }
+      if (rows[0].cnt > 0) {
+        return res.status(400).json({ success: false, message: 'Email is already registered.' });
+      }
+
+      try {
+        // 3) Hash password
+        const hash = await bcrypt.hash(password, 10);
+
+        // 4) Insert student
+        const sql = `
+          INSERT INTO Student
+            (password, first_name, last_name, date_of_birth,
+             street, city, province, postal_code,
+             email, program, semester)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        db.query(
+          sql,
+          [
+            hash,
+            first_name,
+            last_name,
+            date_of_birth,
+            street   || null,
+            city     || null,
+            province || null,
+            postal_code || null,
+            email,
+            program,
+            semester
+          ],
+          (err2, result) => {
+            if (err2) {
+              console.error('Create Student Error:', err2);
+              return res.status(500).json({ success: false, message: 'Failed to create student.' });
+            }
+
+            // 5) Fetch and return the new record (sans password)
+            db.query(
+              `SELECT
+                 student_id,
+                 first_name,
+                 last_name,
+                 email,
+                 program,
+                 semester
+               FROM Student
+               WHERE student_id = ?`,
+              [result.insertId],
+              (err3, students) => {
+                if (err3) {
+                  console.error('Fetch new student error:', err3);
+                  return res.status(500).json({
+                    success: false,
+                    message: 'Student created but failed to retrieve details.'
+                  });
+                }
+                res.json({
+                  success: true,
+                  student: students[0]
+                });
+              }
+            );
+          }
+        );
+      } catch (hashErr) {
+        console.error('Hashing error:', hashErr);
+        res.status(500).json({ success: false, message: 'Server error.' });
+      }
+    }
+  );
+});
+
+
+// ---------------------- Update Student API ----------------------
+// --- Search students ---
+// --- Search students by ID, first name, last name or email ---
+// --- Search students by any field (q) ---
+app.get('/api/admin/search-students', (req, res) => {
+  const q = req.query.q?.trim();
+  if (!q) {
+    return res.status(400).json({ message: 'Query (q) is required.' });
+  }
+
+  // We'll search ID exactly, and name/email via LIKE
+  const sql = `
+    SELECT student_id, first_name, last_name, email
+      FROM Student
+     WHERE student_id = ?
+        OR first_name LIKE ?
+        OR last_name LIKE ?
+        OR email LIKE ?
+     ORDER BY student_id
+     LIMIT 100
+  `;
+  const likeQ = `%${q}%`;
+
+  db.query(sql, [ q, likeQ, likeQ, likeQ ], (err, rows) => {
+    if (err) {
+      console.error('Search students error:', err);
+      return res.status(500).json({ message: 'Server error.' });
+    }
+    res.json({ students: rows });
+  });
+});
+
+
+
+// --- Fetch one student ---
+app.get('/api/admin/student/:id', (req, res) => {
+  db.query(
+    'SELECT * FROM Student WHERE student_id = ?',
+    [req.params.id],
+    (err, rows) => {
+      if (err) {
+        console.error('Fetch student error:', err);
+        return res.status(500).json({ message:'Server error.' });
+      }
+      if (!rows.length) return res.status(404).json({ message:'Not found.' });
+      res.json({ student: rows[0] });
+    }
+  );
+});
+
+// --- Update student ---
+app.post('/api/admin/update-student', (req, res) => {
+  const {
+    id, first_name, last_name, email, date_of_birth,
+    street, city, province, postal_code,
+    program, semester
+  } = req.body;
+  if (!id||!first_name||!last_name||!email||!date_of_birth||!program||!semester) {
+    return res.status(400).json({ success:false, message:'Missing fields.' });
+  }
+
+  // duplicate email?
+  db.query(
+    'SELECT COUNT(*) AS cnt FROM Student WHERE email = ? AND student_id <> ?',
+    [email,id],
+    (e,rows) => {
+      if (e) {
+        console.error('Email check error:',e);
+        return res.status(500).json({ success:false, message:'Server error.' });
+      }
+      if (rows[0].cnt>0) {
+        return res.json({ success:false, message:'Email in use.' });
+      }
+      // do update
+      const sql = `
+        UPDATE Student
+        SET first_name=?, last_name=?, email=?, date_of_birth=?,
+            street=?, city=?, province=?, postal_code=?,
+            program=?, semester=?
+        WHERE student_id=?
+      `;
+      db.query(sql, [
+        first_name, last_name, email, date_of_birth,
+        street, city, province, postal_code,
+        program, semester, id
+      ], err2 => {
+        if (err2) {
+          console.error('Update student error:',err2);
+          return res.status(500).json({ success:false, message:'Failed.' });
+        }
+        res.json({ success:true, message:'Updated.' });
+      });
+    }
+  );
+});
+
+// --- Delete student ---
+app.post('/api/admin/delete-student', (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ success:false, message:'ID required.' });
+  db.query(
+    'DELETE FROM Student WHERE student_id = ?',
+    [id],
+    (err, result) => {
+      if (err) {
+        console.error('Delete student error:',err);
+        return res.status(500).json({
+          success:false,
+          message:'Cannot delete; check enrollments.'
+        });
+      }
+      if (result.affectedRows===0) {
+        return res.json({ success:false, message:'Not found.' });
+      }
+      res.json({ success:true, message:'Deleted.' });
+    }
+  );
+});
+
+
+// Create Course Section
+
+// 1) Fetch all courses for the prerequisite dropdown
+// 1) Fetch all courses for prerequisite dropdown
+// 1) Fetch all courses (id + name) for both picker & prerequisite
+app.get('/api/admin/all-courses', (req, res) => {
+  const sql = `SELECT Course_ID, name FROM Course ORDER BY name`;
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Fetch courses error:", err);
+      return res.status(500).json({ message: "Error fetching courses." });
+    }
+    // results is now an array of { Course_ID, name }
+    res.json({ courses: results });
+  });
+});
+
+
+// 2) Create Course with duplicate-name check
+app.post('/api/admin/create-course', (req, res) => {
+  const { name, description, credits, department, semester, prerequisite } = req.body;
+  if (!name || !description || !credits || !department || !semester) {
+    return res.status(400).json({ success: false, message: "Missing required fields." });
+  }
+
+  // Check for duplicate name
+  db.query(
+    "SELECT COUNT(*) AS cnt FROM Course WHERE name = ?",
+    [name],
+    (err, rows) => {
+      if (err) {
+        console.error("Duplicate check error:", err);
+        return res.status(500).json({ success: false, message: "Server error." });
+      }
+      if (rows[0].cnt > 0) {
+        return res.json({ success: false, message: "Course name already exists." });
+      }
+
+      // Insert new course
+      const sql = `
+        INSERT INTO Course
+          (name, description, credits, department, semester, prerequisite)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      db.query(
+        sql,
+        [name, description, credits, department, semester, prerequisite],
+        (err2, result) => {
+          if (err2) {
+            console.error("Create Course Error:", err2);
+            return res.status(500).json({ success: false, message: "Failed to create course." });
+          }
+          // Return inserted ID & name
+          res.json({
+            success:    true,
+            courseId:   result.insertId,
+            courseName: name,
+            message:    "Course created successfully!"
+          });
+        }
+      );
+    }
+  );
+});
+
+
+
+// update course
+// 1) Fetch a single course’s details
+app.get('/api/admin/course/:id', (req, res) => {
+  const id = req.params.id;
+  db.query(
+    "SELECT * FROM Course WHERE Course_ID = ?",
+    [id],
+    (err, results) => {
+      if (err) {
+        console.error("Fetch course error:", err);
+        return res.status(500).json({ message: "Server error." });
+      }
+      if (!results.length) {
+        return res.status(404).json({ message: "Course not found." });
+      }
+      res.json({ course: results[0] });
+    }
+  );
+});
+
+// 2) Update course with duplicate-name check
+app.post('/api/admin/update-course', (req, res) => {
+  const { id, name, description, credits, department, semester, prerequisite } = req.body;
+  if (!id || !name || !description || !credits || !department || !semester) {
+    return res.status(400).json({ success: false, message: "Missing required fields." });
+  }
+
+  // Check for other course with same name
+  db.query(
+    "SELECT COUNT(*) AS cnt FROM Course WHERE name = ? AND Course_ID <> ?",
+    [name, id],
+    (err, rows) => {
+      if (err) {
+        console.error("Duplicate check error:", err);
+        return res.status(500).json({ success: false, message: "Server error." });
+      }
+      if (rows[0].cnt > 0) {
+        return res.json({ success: false, message: "Another course already uses that name." });
+      }
+
+      // Perform update
+      const sql = `
+        UPDATE Course
+        SET name=?, description=?, credits=?, department=?, semester=?, prerequisite=?
+        WHERE Course_ID=?
+      `;
+      db.query(
+        sql, [name, description, credits, department, semester, prerequisite, id],
+        (err2) => {
+          if (err2) {
+            console.error("Update Course Error:", err2);
+            return res.status(500).json({ success: false, message: "Failed to update course." });
+          }
+          res.json({ success: true, message: "Course updated successfully!" });
+        }
+      );
+    }
+  );
+});
+
+
+// Delete Course
+app.post('/api/admin/delete-course', (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Course ID is required.' });
+  }
+  db.query(
+    'DELETE FROM Course WHERE Course_ID = ?',
+    [id],
+    (err, result) => {
+      if (err) {
+        console.error('Delete Course Error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Cannot delete course; it may be in use.'
+        });
+      }
+      if (result.affectedRows === 0) {
+        return res.json({ success: false, message: 'Course not found.' });
+      }
+      res.json({ success: true, message: 'Course deleted successfully.' });
+    }
+  );
+});
+
+
+// Instructor section
+
+// --- Fetch all instructors for dropdowns, tables, etc. ---
+app.get('/api/admin/all-instructors', (req, res) => {
+  const sql = `SELECT Instructor_ID AS id,
+                      CONCAT(First_Name,' ',Last_Name) AS name,
+                      Email,
+                      Department
+               FROM Instructor
+               ORDER BY Instructor_ID`;
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Fetch instructors error:", err);
+      return res.status(500).json({ message: "Error fetching instructors." });
+    }
+    res.json({ instructors: results });
+  });
+});
+
+// --- Create Instructor ---
+app.post('/api/admin/create-instructor', (req, res) => {
+  const { firstName, lastName, email, department } = req.body;
+  if (!firstName || !lastName || !email || !department) {
+    return res.status(400).json({ success: false, message: "All fields are required." });
+  }
+  // 1) Duplicate‐email check
+  db.query("SELECT COUNT(*) AS cnt FROM Instructor WHERE Email = ?", [email], (err, rows) => {
+    if (err) {
+      console.error("Email check error:", err);
+      return res.status(500).json({ success: false, message: "Server error." });
+    }
+    if (rows[0].cnt > 0) {
+      return res.json({ success: false, message: "Email already in use." });
+    }
+    // 2) Generate next ID (I###)
+    db.query("SELECT Instructor_ID FROM Instructor ORDER BY Instructor_ID DESC LIMIT 1", (err2, ids) => {
+      if (err2) {
+        console.error("ID fetch error:", err2);
+        return res.status(500).json({ success: false, message: "Server error." });
+      }
+      let next = "I001";
+      if (ids.length) {
+        const num = parseInt(ids[0].Instructor_ID.slice(1)) + 1;
+        next = "I" + String(num).padStart(3, "0");
+      }
+      // 3) Insert
+      db.query(
+        `INSERT INTO Instructor
+           (Instructor_ID, First_Name, Last_Name, Email, Department)
+         VALUES (?, ?, ?, ?, ?)`,
+        [ next, firstName, lastName, email, department ],
+        err3 => {
+          if (err3) {
+            console.error("Create error:", err3);
+            return res.status(500).json({ success: false, message: "Failed to create." });
+          }
+          res.json({
+            success: true,
+            id:      next,
+            name:    firstName + " " + lastName,
+            message: "Instructor created."
+          });
+        }
+      );
+    });
+  });
+});
+
+// --- Fetch one instructor for editing ---
+app.get('/api/admin/instructor/:id', (req, res) => {
+  db.query(
+    "SELECT * FROM Instructor WHERE Instructor_ID = ?",
+    [ req.params.id ],
+    (err, rows) => {
+      if (err) {
+        console.error("Fetch error:", err);
+        return res.status(500).json({ message: "Server error." });
+      }
+      if (!rows.length) {
+        return res.status(404).json({ message: "Not found." });
+      }
+      res.json({ instructor: rows[0] });
+    }
+  );
+});
+
+// --- Update Instructor ---
+app.post('/api/admin/update-instructor', (req, res) => {
+  const { id, firstName, lastName, email, department } = req.body;
+  if (!id || !firstName || !lastName || !email || !department) {
+    return res.status(400).json({ success: false, message: "Missing fields." });
+  }
+  // 1) Duplicate‐email check
+  db.query(
+    "SELECT COUNT(*) AS cnt FROM Instructor WHERE Email = ? AND Instructor_ID <> ?",
+    [ email, id ],
+    (err, rows) => {
+      if (err) {
+        console.error("Email check error:", err);
+        return res.status(500).json({ success: false, message: "Server error." });
+      }
+      if (rows[0].cnt > 0) {
+        return res.json({ success: false, message: "Email already in use." });
+      }
+      // 2) Perform update
+      db.query(
+        `UPDATE Instructor
+         SET First_Name=?, Last_Name=?, Email=?, Department=?
+         WHERE Instructor_ID=?`,
+        [ firstName, lastName, email, department, id ],
+        err2 => {
+          if (err2) {
+            console.error("Update error:", err2);
+            return res.status(500).json({ success: false, message: "Failed to update." });
+          }
+          res.json({ success: true, message: "Instructor updated." });
+        }
+      );
+    }
+  );
+});
+
+// --- Delete Instructor ---
+app.post('/api/admin/delete-instructor', (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ success: false, message: "ID is required." });
+  }
+  db.query("DELETE FROM Instructor WHERE Instructor_ID = ?", [id], (err, result) => {
+    if (err) {
+      console.error("Delete error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Cannot delete; instructor may be assigned to courses."
+      });
+    }
+    if (result.affectedRows === 0) {
+      return res.json({ success: false, message: "Instructor not found." });
+    }
+    res.json({ success: true, message: "Instructor deleted." });
+  });
+});
+
+
+
 
 //Reports Section: 
 

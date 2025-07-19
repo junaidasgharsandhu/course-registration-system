@@ -1,193 +1,421 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Update Course - Grand Lakes University</title>
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
-        .sidebar {
-            width: 220px;
-            background-color: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding-top: 20px;
-        }
-        .sidebar h3 {
-            margin: 15px 20px 5px;
-            font-size: 14px;
-            color: #bdc3c7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .sidebar a {
-            padding: 12px 20px;
-            color: white;
-            text-decoration: none;
-            display: block;
-            transition: background 0.3s, padding-left 0.3s;
-            font-size: 14px;
-        }
-        .sidebar a:hover {
-            background-color: #34495e;
-            padding-left: 25px;
-        }
-        .sidebar a.active-link {
-            background-color: #2980b9;
-            padding-left: 25px;
-        }
-        .logout-btn {
-            margin-top: auto;
-            padding: 12px 20px;
-            background-color: #c0392b;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .logout-btn:hover {
-            background-color: #a93226;
-        }
-        .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; position: relative; }
-        .content h1 { color: #2c3e50; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        input, button {
-            padding: 10px; width: 95%;
-            font-size: 15px; margin-top: 5px;
-            border-radius: 5px; border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #3498db; border: none; color: white;
-            cursor: pointer; transition: background-color 0.3s;
-        }
-        button:hover { background-color: #2980b9; }
+  <meta charset="UTF-8">
+  <title>Update Course - Grand Lakes University</title>
+  <style>
+    /* Reset & Base */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
 
-        /* Loader overlay */
-        .loader-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.5s ease;
-        }
-        .loader {
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid #3498db;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    /* Loader */
+    .loader-overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000; transition: opacity .5s ease;
+    }
+    .loader {
+      border: 6px solid #f3f3f3; border-top: 6px solid #3498db;
+      border-radius: 50%; width: 60px; height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background: #2c3e50; color: white;
+      display: flex; flex-direction: column; padding-top: 20px;
+    }
+    .sidebar h3 {
+      margin: 15px 20px 5px; font-size: 14px;
+      color: #bdc3c7; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .sidebar a {
+      padding: 12px 20px; color: white; text-decoration: none;
+      display: block; transition: background .3s, padding-left .3s;
+      font-size: 14px;
+    }
+    .sidebar a:hover { background: #34495e; padding-left: 25px; }
+    .sidebar a.active-link { background: #2980b9; padding-left: 25px; }
+    .sidebar .sub-link {
+      padding-left: 40px; font-size: 13px; color: #ecf0f1;
+    }
+    .sidebar .sub-link:hover { background: #3d566e; padding-left: 45px; }
+    .sidebar .sub-link.active-link { background: #2980b9; padding-left: 45px; }
+    .logout-btn {
+      margin-top: auto; padding: 12px 20px; background: #c0392b;
+      text-align: center; cursor: pointer; transition: background .3s;
+    }
+    .logout-btn:hover { background: #a93226; }
+
+    /* Content */
+    .content {
+      flex: 1; padding: 40px; background: #f4f6f8;
+      overflow-y: auto; display: flex; justify-content: center;
+      align-items: flex-start;
+    }
+    .form-wrapper {
+      background: #fff; padding: 30px; border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      max-width: 600px; width: 100%;
+    }
+    .form-wrapper h1 {
+      margin-top: 0; margin-bottom: 20px; color: #2c3e50;
+      text-align: center;
+    }
+
+    /* Floating Labels */
+    .form-group { position: relative; margin-bottom: 20px; }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: 12px 10px 8px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 5px; background: #fff;
+      outline: none; transition: border-color .3s, box-shadow .3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #3498db; box-shadow: 0 0 5px rgba(52,152,219,0.5);
+    }
+    .form-group label {
+      position: absolute; top: 50%; left: 10px;
+      transform: translateY(-50%); pointer-events: none;
+      color: #777; font-size: 15px; background: #fff;
+      padding: 0 4px; transition: all .2s ease;
+    }
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label,
+    .form-group select:focus + label,
+    .form-group select:not([value=""]) + label {
+      top: -8px; font-size: 12px; color: #3498db;
+    }
+
+    /* Buttons */
+    .btn {
+      display: block; width: 100%; padding: 12px;
+      font-size: 15px; color: #fff; border: none;
+      border-radius: 5px; cursor: pointer; margin-top: 10px;
+      transition: background .3s, transform .2s;
+    }
+    .btn:disabled { background: #aaa; cursor: not-allowed; }
+    .btn.update { background: #3498db; }
+    .btn.update:hover:not(:disabled) {
+      background: #2980b9; transform: translateY(-2px);
+    }
+    .btn.delete { background: #c0392b; }
+    .btn.delete:hover:not(:disabled) {
+      background: #a93226; transform: translateY(-2px);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px;
+      background: #27ae60; color: #fff; padding: 15px 25px;
+      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .5s, transform .5s; z-index: 9999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #c0392b; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000;
+    }
+    .modal {
+      background: #fff; padding: 20px; border-radius: 8px;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;
+    }
+    .modal h2 { margin-top: 0; color: #c0392b; }
+    .modal p { margin: 15px 0; }
+    .modal .btn {
+      padding: 10px 20px; border: none; border-radius: 5px;
+      font-size: 14px; cursor: pointer; margin: 0 10px;
+      transition: background .3s, transform .2s;
+    }
+    .modal .btn.confirm {
+      background: #c0392b; color: #fff;
+    }
+    .modal .btn.confirm:hover {
+      background: #a93226; transform: translateY(-2px);
+    }
+    .modal .btn.cancel {
+      background: #bdc3c7; color: #fff;
+    }
+    .modal .btn.cancel:hover {
+      background: #95a5a6; transform: translateY(-2px);
+    }
+  </style>
 </head>
 <body>
 
-    <div class="loader-overlay" id="pageLoader">
-        <div class="loader"></div>
-    </div>
+  <!-- Loader -->
+  <div class="loader-overlay" id="pageLoader">
+    <div class="loader"></div>
+  </div>
 
-    <div class="sidebar">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
-                <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
-                <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
-            </svg>
-            <h2 style="margin: 5px 0 0 0; font-size: 20px; color: #ecf0f1;">GLU Admin</h2>
+  <!-- Sidebar -->
+
+  <div class="sidebar">
+    <div style="text-align:center; margin-bottom:20px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+        <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" dy=".3em">GLU</text>
+      </svg>
+      <h2 style="margin:5px 0;font-size:20px;color:#ecf0f1;">GLU Admin</h2>
+    </div>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+     <a href="update_student.html">🔍 Manage Students</a>
+    <a href="create_course.html">📚 Create Course</a>
+    <a class="active-link" href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+    <a href="manage_instructor.html">🛠️ Manage Instructors</a>
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+    <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <div class="form-wrapper">
+      <h1>Update Course</h1>
+
+      <div class="form-group">
+        <select id="courseSelect">
+          <option value="" selected disabled></option>
+        </select>
+        <label>Choose Course…</label>
+      </div>
+
+      <form id="updateForm" onsubmit="updateCourse(event)">
+        <div class="form-group">
+          <input type="text" id="courseName" placeholder=" " required disabled>
+          <label for="courseName">Course Name</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="description" placeholder=" " required disabled>
+          <label for="description">Description</label>
+        </div>
+        <div class="form-group">
+          <select id="credits" required disabled>
+            <option value="" selected disabled></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+          <label for="credits">Credits</label>
+        </div>
+        <div class="form-group">
+          <select id="department" required disabled>
+            <option value="" selected disabled></option>
+            <option value="IT">IT</option>
+            <option value="BUSI">BUSI</option>
+            <option value="ARTS">ARTS</option>
+          </select>
+          <label for="department">Department</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="semester" placeholder=" " required disabled>
+          <label for="semester">Semester</label>
+        </div>
+        <div class="form-group">
+          <select id="prerequisite" disabled>
+            <option value="" selected>No Prerequisite</option>
+          </select>
+          <label for="prerequisite">Prerequisite</label>
         </div>
 
-        <a href="admin_dashboard.html">🏠 Dashboard</a>
-        <h3>Manage</h3>
-        <a href="create_student.html">👨‍🎓 Create Student</a>
-        <a href="create_course.html">📚 Create Course</a>
-        <a class="active-link" href="update_course.html">✏️ Update Course</a>
-        <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
-
-        <h3>Reports</h3>
-        <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
-        <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
-
-        <div class="logout-btn" onclick="window.location.href='index.html'">🚪 Logout</div>
+        <button type="submit" class="btn update" id="updateBtn" disabled>Update Course</button>
+        <button type="button" class="btn delete" id="deleteBtn" disabled>Delete Course</button>
+      </form>
     </div>
+  </div>
 
-    <div class="content">
-        <h1>Update Course</h1>
-        <form onsubmit="updateCourse(event)">
-            <div class="form-group">
-                <input type="number" id="courseId" placeholder="Course ID" required>
-            </div>
-            <div class="form-group">
-                <input type="text" id="courseName" placeholder="Updated Course Name" required>
-            </div>
-            <div class="form-group">
-                <input type="text" id="description" placeholder="Updated Description" required>
-            </div>
-            <button type="submit">Update Course</button>
-        </form>
-
-        <div id="result"></div>
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <h2>Confirm Deletion</h2>
+      <p>Are you sure you want to delete:<br><strong id="modalCourseLabel"></strong>?</p>
+      <button class="btn cancel" id="cancelDelete">Cancel</button>
+      <button class="btn confirm" id="confirmDelete">Delete</button>
     </div>
+  </div>
 
-    <script>
-        // Active link highlight
-        const currentPath = window.location.pathname.split("/").pop();
-        const links = document.querySelectorAll('.sidebar a');
-        links.forEach(link => {
-            if (link.getAttribute("href") === currentPath) {
-                link.classList.add("active-link");
-            }
+  <script>
+    // Utility: Toast notifications
+    function showToast(msg, isError = false) {
+      const t = document.createElement('div');
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 100);
+      setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 500);
+      }, 3000);
+    }
+
+    // Fade out loader on page load
+    const loader = document.getElementById('pageLoader');
+    window.addEventListener('load', () => {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    // Elements
+    const courseSelect = document.getElementById('courseSelect');
+    const formFields = [
+      'courseName', 'description',
+      'credits', 'department',
+      'semester', 'prerequisite'
+    ].map(id => document.getElementById(id));
+    const updateBtn = document.getElementById('updateBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    let selectedId = null, selectedName = '';
+
+    // Enable/Disable form
+    function setFormEnabled(enabled) {
+      formFields.forEach(f => f.disabled = !enabled);
+      updateBtn.disabled = !enabled;
+      deleteBtn.disabled = !enabled;
+    }
+    setFormEnabled(false);
+
+    // Load all courses for dropdowns
+    fetch('/api/admin/all-courses')
+      .then(r => r.json())
+      .then(data => {
+        data.courses.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.Course_ID;
+          opt.textContent = `[${c.Course_ID}] ${c.name}`;
+          courseSelect.appendChild(opt);
+          // also populate prerequisite dropdown
+          const pre = document.getElementById('prerequisite');
+          const pOpt = document.createElement('option');
+          pOpt.value = c.name;
+          pOpt.textContent = c.name;
+          pre.appendChild(pOpt);
         });
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Error loading course list', true);
+      });
 
-        // Page loader fade-out
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('pageLoader');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
+    // When a course is selected
+    courseSelect.addEventListener('change', () => {
+      selectedId = courseSelect.value;
+      selectedName = courseSelect.options[courseSelect.selectedIndex].text;
+      setFormEnabled(false);
+      loader.style.display = 'flex'; loader.style.opacity = '1';
+
+      fetch(`/api/admin/course/${selectedId}`)
+        .then(r => r.json())
+        .then(data => {
+          const c = data.course;
+          document.getElementById('courseName').value = c.name;
+          document.getElementById('description').value = c.description;
+          document.getElementById('credits').value = c.credits;
+          document.getElementById('department').value = c.department;
+          document.getElementById('semester').value = c.semester;
+          document.getElementById('prerequisite').value = c.prerequisite || '';
+          setFormEnabled(true);
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Error loading course details', true);
+        })
+        .finally(() => {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.display = 'none', 500);
         });
+    });
 
-        function updateCourse(e) {
-            e.preventDefault();
-            const loader = document.getElementById("pageLoader");
-            loader.style.display = "flex";
-            loader.style.opacity = "1";
+    // Update Course
+    function updateCourse(e) {
+      e.preventDefault();
+      const payload = {
+        id: selectedId,
+        name: document.getElementById('courseName').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        credits: document.getElementById('credits').value,
+        department: document.getElementById('department').value,
+        semester: document.getElementById('semester').value.trim(),
+        prerequisite: document.getElementById('prerequisite').value || null
+      };
+      loader.style.display = 'flex'; loader.style.opacity = '1';
 
-            const data = {
-                id: document.getElementById('courseId').value.trim(),
-                name: document.getElementById('courseName').value.trim(),
-                description: document.getElementById('description').value.trim()
-            };
-
-            if (!data.id || !data.name || !data.description) {
-                loader.style.display = "none";
-                document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ Please fill in all fields.</div>`;
-                return;
-            }
-
-            fetch('/api/admin/update-course', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(resp => {
-                loader.style.display = "none";
-                if (resp.success) {
-                    document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#27ae60;">✅ Course updated successfully!</div>`;
-                } else {
-                    document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ ${resp.message || "Error updating course."}</div>`;
-                }
-            })
-            .catch(err => {
-                loader.style.display = "none";
-                console.error(err);
-                document.getElementById('result').innerHTML = `<div style="margin-top:15px; color:#e74c3c;">⚠️ Error updating course.</div>`;
-            });
+      fetch('/api/admin/update-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp.success) {
+          showToast(`Course [${selectedId}] updated successfully!`);
+        } else {
+          showToast(resp.message, true);
         }
-    </script>
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Error updating course', true);
+      })
+      .finally(() => {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+      });
+    }
+
+    // Delete Course
+    const modal = document.getElementById('confirmModal');
+    document.getElementById('cancelDelete').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    deleteBtn.addEventListener('click', () => {
+      document.getElementById('modalCourseLabel').textContent = selectedName;
+      modal.style.display = 'flex';
+    });
+    document.getElementById('confirmDelete').addEventListener('click', () => {
+      modal.style.display = 'none';
+      loader.style.display = 'flex'; loader.style.opacity = '1';
+
+      fetch('/api/admin/delete-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedId })
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp.success) {
+          showToast(`Course [${selectedId}] deleted.`);
+          // remove from dropdown
+          const opt = document.querySelector(`#courseSelect option[value="${selectedId}"]`);
+          if (opt) opt.remove();
+          document.getElementById('updateForm').reset();
+          setFormEnabled(false);
+        } else {
+          showToast(resp.message, true);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Error deleting course', true);
+      })
+      .finally(() => {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+      });
+    });
+  </script>
 </body>
 </html>
