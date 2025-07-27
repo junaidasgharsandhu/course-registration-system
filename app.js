@@ -131,8 +131,7 @@ app.post('/api/login/admin', async (req, res) => {
         return res.status(400).json({ message: 'Please complete the reCAPTCHA.' });
     }
 
-    const secretKey = "6LeJ6YYrAAAAAGQwd-JEUGw7JvqLMowl8Q2h8Ylf"; // Replace with your actual reCAPTCHA secret key
-
+    const secretKey = "6LeYBZErAAAAAAdFD0uyxyJMMKuITv9PnQ-m0IHl"; 
     try {
         const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`;
         const response = await axios.post(verifyURL);
