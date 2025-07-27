@@ -70,7 +70,7 @@ app.post('/api/login/student', async (req, res) => {
         return res.status(400).json({ message: 'Please complete the reCAPTCHA.' });
     }
 
-    const secretKey = "6LeJ6YYrAAAAAGQwd-JEUGw7JvqLMowl8Q2h8Ylf"; // 
+    const secretKey = "6LeYBZErAAAAAAdFD0uyxyJMMKuITv9PnQ-m0IHl"; // 
 
     try {
         // Verify CAPTCHA with Google
