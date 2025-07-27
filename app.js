@@ -431,19 +431,50 @@ app.post('/api/student/add-course', (req, res) => {
 
                         const { capacity, enrolledCount } = capResults[0];
                         if (enrolledCount >= capacity) {
-                            return res.status(400).json({ message: "This section is full. Cannot enroll.", status: "error" });
+                            // ✅ Check waitlist count
+                            const waitlistCountSql = `
+                                SELECT COUNT(*) AS waitlistCount 
+                                FROM Waitlist 
+                                WHERE Section_ID = ?
+                            `;
+                            db.query(waitlistCountSql, [sectionId], (waitErr, waitResults) => {
+                                if (waitErr) {
+                                    console.error("Error checking waitlist count:", waitErr);
+                                    return res.status(500).json({ message: "Error checking waitlist.", status: "error" });
+                                }
+
+                                const waitlistCount = waitResults[0].waitlistCount;
+                                if (waitlistCount >= 10) {
+                                    return res.status(400).json({ message: "Error: Class Size and Waitlist is full for this Section.", status: "error" });
+                                }
+
+                                // ✅ Add to waitlist
+                                const semester = "Fall 2025"; // Or dynamically fetch if available
+                                const insertWaitlist = `
+                                    INSERT INTO Waitlist (Student_ID, Course_ID, Section_ID, Semester)
+                                    VALUES (?, ?, ?, ?)
+                                `;
+                                db.query(insertWaitlist, [studentId, courseId, sectionId, semester], (waitInsErr) => {
+                                    if (waitInsErr) {
+                                        console.error("Error inserting into waitlist:", waitInsErr);
+                                        return res.status(500).json({ message: "Could not add to waitlist. Possible reason: You are already on the list ", status: "error" });
+                                    }
+
+                                    return res.status(200).json({ message: "Section is full. You have been added to the waitlist.", status: "waitlisted" });
+                                });
+                            });
+                        } else {
+                            // ✅ Insert enrollment (all checks passed)
+                            const insertSql = "INSERT INTO Course_Enrollment (Student_ID, Course_ID, Section_ID, enrolled_on) VALUES (?, ?, ?, CURDATE())";
+                            db.query(insertSql, [studentId, courseId, sectionId], (insertErr) => {
+                                if (insertErr) {
+                                    console.error("Database error during insert:", insertErr);
+                                    return res.status(500).json({ message: "Internal server error", status: "error" });
+                                }
+
+                                res.json({ message: "Course added successfully!", status: "success" });
+                            });
                         }
-
-                        // ✅ Insert enrollment (all checks passed)
-                        const insertSql = "INSERT INTO Course_Enrollment (Student_ID, Course_ID, Section_ID, enrolled_on) VALUES (?, ?, ?, CURDATE())";
-                        db.query(insertSql, [studentId, courseId, sectionId], (insertErr) => {
-                            if (insertErr) {
-                                console.error("Database error during insert:", insertErr);
-                                return res.status(500).json({ message: "Internal server error", status: "error" });
-                            }
-
-                            res.json({ message: "Course added successfully!", status: "success" });
-                        });
                     });
                 });
             });
