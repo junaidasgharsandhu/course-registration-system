@@ -2,19 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Weekly Schedule</title>
+  <title>Weekly Schedule - Grand Lakes University</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      color: #2c3e50;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #ffffff;
+      padding: 12px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-svg {
+      width: 40px;
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .logo-container h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #2c3e50;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .nav-links a {
+      color: #2c3e50;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    }
+
+    .nav-links a:hover {
+      background-color: #3498db;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .logout-btn {
+      background-color: #c0392b;
+      color: white;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .logout-btn:hover {
+      background-color: #a93226;
     }
 
     h2 {
       text-align: center;
+      margin: 30px 0 10px;
     }
 
     table {
-      width: 100%;
+      width: 90%;
+      margin: 0 auto 40px;
       border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     th, td {
@@ -40,17 +110,29 @@
       font-size: 12px;
       overflow: hidden;
     }
-
-    .Monday    { background-color: #ff9999; }
-    .Tuesday   { background-color: #99ccff; }
-    .Wednesday { background-color: #99ff99; }
-    .Thursday  { background-color: #ffcc99; }
-    .Friday    { background-color: #ccccff; }
   </style>
 </head>
 <body>
 
-<h2>Student Weekly Schedule</h2>
+<!-- 🌟 Navbar -->
+<div class="navbar">
+  <div class="logo-container">
+    <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+      <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="24" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+    </svg>
+    <h2>GLU Student Portal</h2>
+  </div>
+  <div class="nav-links">
+    <a href="student_dashboard.html">Dashboard</a>
+    <a href="profile.html">Profile</a>
+    <a href="view_courses.html">My Courses</a>
+    <a href="student_transcript.html">Transcript</a>
+    <a href="../index.html" class="logout-btn">Logout</a>
+  </div>
+</div>
+
+<h2>My Weekly Schedule</h2>
 
 <table id="schedule-table">
   <thead>
@@ -90,7 +172,7 @@
     tbody.appendChild(row);
   }
 
-  // Utility: Generate color palette
+  // Utility: Color generator
   const courseColors = {};
   const colorPalette = [
     "#1abc9c", "#3498db", "#9b59b6", "#e67e22", "#e74c3c",
@@ -103,17 +185,14 @@
     .then(res => res.json())
     .then(data => {
       const courses = data.enrolledCourses;
-
       courses.forEach(course => {
         const day = course.day_of_week;
         const start = parseInt(course.start_time.split(":")[0]);
         const end = parseInt(course.end_time.split(":")[0]);
+        const key = course.Course_ID + "_" + course.section_number;
 
-        const courseKey = course.Course_ID + "_" + course.section_number;
-
-        // Assign unique color per course
-        if (!courseColors[courseKey]) {
-          courseColors[courseKey] = colorPalette[colorIndex % colorPalette.length];
+        if (!courseColors[key]) {
+          courseColors[key] = colorPalette[colorIndex % colorPalette.length];
           colorIndex++;
         }
 
@@ -122,16 +201,14 @@
           if (cell) {
             const div = document.createElement('div');
             div.className = 'course';
-            div.style.backgroundColor = courseColors[courseKey];
+            div.style.backgroundColor = courseColors[key];
             div.textContent = `${course.Course_Name} (${course.section_number})\n${course.room_no}`;
             cell.appendChild(div);
           }
         }
       });
     })
-    .catch(err => {
-      console.error('Failed to load schedule:', err);
-    });
+    .catch(err => console.error('Failed to load schedule:', err));
 </script>
 
 </body>

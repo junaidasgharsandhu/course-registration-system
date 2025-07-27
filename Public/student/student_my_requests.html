@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Dashboard - Grand Lakes University</title>
+    <title>My Exchange Requests - Grand Lakes University</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,30 +22,25 @@
             top: 0;
             z-index: 1000;
         }
-
         .logo-container {
             display: flex;
             align-items: center;
         }
-
         .logo-svg {
             width: 50px;
             height: 50px;
             margin-right: 10px;
         }
-
         .logo-container h2 {
             margin: 0;
             font-size: 22px;
             color: #2c3e50;
         }
-
         .nav-links {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-
         .nav-links a {
             color: #2c3e50;
             text-decoration: none;
@@ -53,13 +48,11 @@
             border-radius: 5px;
             transition: background-color 0.3s, color 0.3s, transform 0.2s;
         }
-
         .nav-links a:hover {
             background-color: #3498db;
             color: white;
             transform: translateY(-2px);
         }
-
         .logout-btn {
             background-color: #c0392b;
             color: white;
@@ -68,47 +61,47 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-
         .logout-btn:hover {
             background-color: #a93226;
         }
 
-        /* Welcome header */
-        .header-welcome {
+        /* Content */
+        h1 {
             text-align: center;
             margin: 30px 0 10px 0;
-            font-size: 24px;
             color: #2c3e50;
         }
-
-        /* Cards */
-        .nav-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 30px 20px;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
         }
-
-        .nav-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin: 15px;
-            padding: 20px 30px;
-            text-align: center;
-            width: 220px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
+        .card {
+            background: #ffffff;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
         }
-
-        .nav-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        .card:hover {
+            transform: translateY(-3px);
         }
-
-        .nav-card h3 {
-            margin: 0;
-            color: #2c3e50;
+        .card strong {
+            display: inline-block;
+            width: 160px;
+        }
+        .status-pending {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-approved {
+            color: green;
+            font-weight: bold;
+        }
+        .status-rejected {
+            color: red;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -128,52 +121,50 @@
         <a href="profile.html">Profile</a>
         <a href="view_courses.html">My Courses</a>
         <a href="student_transcript.html">Transcript</a>
-        <a href="index.html" class="logout-btn">Logout</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
     </div>
 </div>
 
-<div id="welcomeContainer" class="header-welcome">👋 Welcome!</div>
-
-<div class="nav-container">
-    <div class="nav-card" onclick="window.location.href='schedule.html'">
-        <h3>View Weekly Schedule</h3> 
-    </div>
-    <div class="nav-card" onclick="window.location.href='add_course.html'">
-        <h3>Add Course</h3>
-    </div>
-    <div class="nav-card" onclick="window.location.href='drop_course.html'">
-        <h3>Drop Course</h3>
-    </div>
-    <div class="nav-card" onclick="window.location.href='student_create_exchange.html'">
-        <h3>Request Section Exchange</h3>
-    </div>
-    <div class="nav-card" onclick="window.location.href='student_view_requests.html'">
-        <h3>Available Exchange Requests</h3>
-    </div>
-    <div class="nav-card" onclick="window.location.href='student_my_requests.html'">
-        <h3>My Exchange Requests</h3>
-    </div>
-    <div class="nav-card" onclick="window.location.href='student_transcript.html'">
-        <h3>View Transcript</h3>
-    </div>  
-
-</div>
+<h1>My Exchange Requests</h1>
+<div class="container" id="requests"></div>
 
 <script>
-    function loadWelcome() {
-        fetch('/api/session-info')
+    function loadMyRequests() {
+        fetch('/api/my-exchange-requests')
             .then(res => res.json())
             .then(data => {
-                if (data.firstName) {
-                    document.getElementById('welcomeContainer').innerHTML = `👋 Welcome, ${data.firstName}!`;
+                const container = document.getElementById('requests');
+                container.innerHTML = "";
+                if (!data.requests || data.requests.length === 0) {
+                    container.innerHTML = "<p style='text-align:center;'>No exchange requests found.</p>";
+                    return;
                 }
+
+                data.requests.forEach(req => {
+                    let statusClass = "";
+                    if (req.Status === "Pending") statusClass = "status-pending";
+                    if (req.Status === "Approved") statusClass = "status-approved";
+                    if (req.Status === "Rejected") statusClass = "status-rejected";
+
+                    container.innerHTML += `
+                        <div class="card">
+                            <strong>Request ID:</strong> ${req.Request_ID}<br>
+                            <strong>Course:</strong> ${req.Course_Name} (ID: ${req.Course_ID})<br>
+                            <strong>From Section:</strong> ${req.From_Section}<br>
+                            <strong>To Section:</strong> ${req.To_Section}<br>
+                            <strong>Status:</strong> <span class="${statusClass}">${req.Status}</span><br>
+                            <strong>Requested On:</strong> ${new Date(req.Requested_On).toLocaleString()}
+                        </div>
+                    `;
+                });
             })
             .catch(err => {
                 console.error(err);
+                document.getElementById('requests').innerHTML = "⚠️ Error loading requests.";
             });
-    }
+        }
 
-    window.onload = loadWelcome;
+    loadMyRequests();
 </script>
 
 </body>

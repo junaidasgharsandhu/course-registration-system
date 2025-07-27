@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Drop Course - Grand Lakes University</title>
+    <title>Add Course - Grand Lakes University</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -67,7 +67,7 @@
 
         /* Container & Cards */
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 30px auto;
             padding: 20px;
             background-color: white;
@@ -76,13 +76,32 @@
         }
         h2 {
             text-align: center;
-            color: #2c3e50;
             margin-top: 0;
+            color: #2c3e50;
         }
+        .filters input, .filters button {
+            padding: 10px;
+            margin: 8px 5px;
+            font-size: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .filters button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background-color: #219150;
+            transform: translateY(-2px);
+        }
+
         .course-card {
             border: 1px solid #e0e0e0;
             border-radius: 10px;
-            padding: 15px;
+            padding: 20px;
             margin: 20px 0;
             background: #fafafa;
             transition: transform 0.2s;
@@ -102,38 +121,41 @@
         .course-details {
             font-size: 14px;
             color: #555;
-            margin-top: 8px;
         }
-        .course-card button {
+        .sections-container {
             margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .section-card {
+            flex: 1 1 250px;
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .section-card button {
             width: 100%;
-            background-color: #c0392b;
+            margin-top: 8px;
+            background-color: #3498db;
             border: none;
             color: white;
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 15px;
             transition: background-color 0.3s;
         }
-        .course-card button:hover {
-            background-color: #a93226;
+        .section-card button:hover {
+            background-color: #2980b9;
         }
         .back-button {
-            background-color: #3498db;
-            color: white;
+            background-color: #e74c3c;
             width: 200px;
             margin: 0 auto;
             display: block;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: background-color 0.3s;
         }
         .back-button:hover {
-            background-color: #2980b9;
+            background-color: #c0392b;
         }
 
         /* Toast styles */
@@ -176,13 +198,19 @@
         <a href="profile.html">Profile</a>
         <a href="view_courses.html">My Courses</a>
         <a href="student_transcript.html">Transcript</a>
-        <a href="index.html" class="logout-btn">Logout</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
     </div>
 </div>
 
 <div class="container">
-    <h2>Drop a Course</h2>
-    <div id="courses"></div>
+    <h2>Search and Add Course</h2>
+    <div class="filters">
+        <input type="number" id="courseId" placeholder="Course ID (optional)">
+        <input type="text" id="courseName" placeholder="Course Name (optional)">
+        <input type="text" id="department" placeholder="Department (optional)">
+        <button onclick="searchCourse()">Search Courses</button>
+    </div>
+    <div id="courseInfo"></div>
     <button class="back-button" onclick="window.location.href='student_dashboard.html'">← Back to Dashboard</button>
 </div>
 
@@ -209,46 +237,84 @@
         }, 3000);
     }
 
-    function loadCourses() {
-        fetch('/api/student/courses')
+    function searchCourse() {
+        const courseId = document.getElementById('courseId').value;
+        const name = document.getElementById('courseName').value;
+        const department = document.getElementById('department').value;
+        const courseInfoDiv = document.getElementById('courseInfo');
+
+        courseInfoDiv.innerHTML = "Loading...";
+
+        fetch(`/api/student/search-course?courseId=${encodeURIComponent(courseId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`)
             .then(res => res.json())
             .then(data => {
-                const container = document.getElementById('courses');
-                container.innerHTML = "";
+                courseInfoDiv.innerHTML = "";
 
-                if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
-                    container.innerHTML = "<p style='text-align:center;'>No enrolled courses found.</p>";
+                if (!data.courses || data.courses.length === 0) {
+                    showToast("No matching courses found.", true);
                     return;
                 }
 
-                data.enrolledCourses.forEach(course => {
+                data.courses.forEach(course => {
+                    let prereqText = course.prerequisite ? course.prerequisite : "None";
+
                     const courseCard = document.createElement("div");
                     courseCard.className = "course-card";
                     courseCard.innerHTML = `
                         <div class="course-header">
-                            <h3>${course.Course_Name}</h3>
+                            <h3>${course.name}</h3>
                             <span>Course ID: ${course.Course_ID}</span>
                         </div>
                         <div class="course-details">
-                            <strong>Section:</strong> ${course.section_number} | 
-                            <strong>Day:</strong> ${course.day_of_week} | 
-                            <strong>Time:</strong> ${course.start_time} - ${course.end_time} | 
-                            <strong>Room:</strong> ${course.room_no} | 
-                            <strong>Mode:</strong> ${course.mode}
+                            ${course.description}<br>
+                            <strong>Credits:</strong> ${course.credits} | 
+                            <strong>Department:</strong> ${course.department} | 
+                            <strong>Semester:</strong> ${course.semester} | 
+                            <strong>Prerequisite:</strong> ${prereqText}
                         </div>
-                        <button onclick="dropCourse(${course.Course_ID}, ${course.Section_ID})">Drop This Course</button>
+                        <div id="sections-${course.Course_ID}" class="sections-container"><em>Loading sections...</em></div>
                     `;
-                    container.appendChild(courseCard);
+
+                    courseInfoDiv.appendChild(courseCard);
+
+                    fetch(`/api/student/course-sections/${course.Course_ID}`)
+                        .then(res => res.json())
+                        .then(sectionData => {
+                            const sectionDiv = document.getElementById(`sections-${course.Course_ID}`);
+                            if (!sectionData.sections || sectionData.sections.length === 0) {
+                                sectionDiv.innerHTML = "<p>No sections available.</p>";
+                                return;
+                            }
+
+                            sectionDiv.innerHTML = "";
+                            sectionData.sections.forEach(section => {
+                                const secCard = document.createElement("div");
+                                secCard.className = "section-card";
+                                secCard.innerHTML = `
+                                    <strong>Section:</strong> ${section.section_number}<br>
+                                    <strong>Day:</strong> ${section.day_of_week}<br>
+                                    <strong>Time:</strong> ${section.start_time} - ${section.end_time}<br>
+                                    <strong>Room:</strong> ${section.room_no}<br>
+                                    <strong>Mode:</strong> ${section.mode}<br>
+                                    <button onclick="addCourse(${course.Course_ID}, ${section.Section_ID}, '${course.name}')">Add This Section</button>
+                                `;
+                                sectionDiv.appendChild(secCard);
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            document.getElementById(`sections-${course.Course_ID}`).innerHTML = "<p>Error loading sections.</p>";
+                        });
                 });
             })
             .catch(err => {
                 console.error(err);
-                document.getElementById('courses').innerHTML = "<p style='text-align:center;'>⚠️ Error loading courses.</p>";
+                showToast("⚠️ Error searching courses.", true);
             });
     }
 
-    function dropCourse(courseId, sectionId) {
-        fetch('/api/student/drop-course', {
+    function addCourse(courseId, sectionId, courseName) {
+        fetch('/api/student/add-course', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ courseId, sectionId })
@@ -260,16 +326,12 @@
             } else {
                 showToast(data.message, true);  // 🔴 Red
             }
-            loadCourses(); // Refresh list after dropping
         })
         .catch(err => {
             console.error(err);
-            showToast("⚠️ Error dropping course.", true);
+            showToast("⚠️ Error adding course.", true);
         });
     }
-
-    // Initial load
-    loadCourses();
 </script>
 
 </body>
