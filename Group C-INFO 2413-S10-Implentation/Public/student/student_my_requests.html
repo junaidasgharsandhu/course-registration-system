@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Exchange Requests - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Content */
+        h1 {
+            text-align: center;
+            margin: 30px 0 10px 0;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .card strong {
+            display: inline-block;
+            width: 160px;
+        }
+        .status-pending {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-approved {
+            color: green;
+            font-weight: bold;
+        }
+        .status-rejected {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<h1>My Exchange Requests</h1>
+<div class="container" id="requests"></div>
+
+<script>
+    function loadMyRequests() {
+        fetch('/api/my-exchange-requests')
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('requests');
+                container.innerHTML = "";
+                if (!data.requests || data.requests.length === 0) {
+                    container.innerHTML = "<p style='text-align:center;'>No exchange requests found.</p>";
+                    return;
+                }
+
+                data.requests.forEach(req => {
+                    let statusClass = "";
+                    if (req.Status === "Pending") statusClass = "status-pending";
+                    if (req.Status === "Approved") statusClass = "status-approved";
+                    if (req.Status === "Rejected") statusClass = "status-rejected";
+
+                    container.innerHTML += `
+                        <div class="card">
+                            <strong>Request ID:</strong> ${req.Request_ID}<br>
+                            <strong>Course:</strong> ${req.Course_Name} (ID: ${req.Course_ID})<br>
+                            <strong>From Section:</strong> ${req.From_Section}<br>
+                            <strong>To Section:</strong> ${req.To_Section}<br>
+                            <strong>Status:</strong> <span class="${statusClass}">${req.Status}</span><br>
+                            <strong>Requested On:</strong> ${new Date(req.Requested_On).toLocaleString()}
+                        </div>
+                    `;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('requests').innerHTML = "⚠️ Error loading requests.";
+            });
+        }
+
+    loadMyRequests();
+</script>
+
+</body>
+</html>

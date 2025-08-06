@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Exchange Request - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Content */
+        h1 {
+            text-align: center;
+            margin: 30px 0 10px 0;
+            color: #2c3e50;
+        }
+        .msg {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #d35400;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .card strong {
+            display: inline-block;
+            width: 130px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #27ae60;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #219150;
+            transform: translateY(-2px);
+        }
+        .back-btn {
+            margin-top: 20px;
+            background-color: #3498db;
+        }
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<h1>Create Exchange Request</h1>
+<div id="msg" class="msg"></div>
+<div class="container" id="courses"></div>
+
+<script>
+    function loadCourses() {
+        fetch('/api/student/courses')
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('courses');
+                container.innerHTML = "";
+
+                if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                    container.innerHTML = "<p style='text-align:center;'>No enrolled courses found.</p>";
+                    return;
+                }
+
+                data.enrolledCourses.forEach(course => {
+                    container.innerHTML += `
+                        <div class="card">
+                            <strong>Course ID:</strong> ${course.Course_ID}<br>
+                            <strong>Course Name:</strong> ${course.Course_Name}<br>
+                            <strong>Section:</strong> ${course.section_number}<br>
+                            <button onclick="loadTargetSections(${course.Course_ID}, ${course.Section_ID})">Request Exchange</button>
+                        </div>
+                    `;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('courses').innerHTML = "⚠️ Error loading courses.";
+            });
+    }
+
+    function loadTargetSections(courseId, currentSectionId) {
+        const container = document.getElementById('courses');
+        container.innerHTML = "<p>Loading available sections...</p>";
+
+        fetch(`/api/student/course-sections/${courseId}`)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = `<h3 style="text-align:center;">Available sections for Course ID: ${courseId}</h3>`;
+                let hasOtherSections = false;
+
+                data.sections.forEach(section => {
+                    if (section.Section_ID !== currentSectionId) {
+                        hasOtherSections = true;
+                        container.innerHTML += `
+                            <div class="card">
+                                <strong>Section:</strong> ${section.section_number}<br>
+                                <strong>Day:</strong> ${section.day_of_week}<br>
+                                <strong>Time:</strong> ${section.start_time} - ${section.end_time}<br>
+                                <strong>Room:</strong> ${section.room_no}<br>
+                                <strong>Mode:</strong> ${section.mode}<br>
+                                <button onclick="createRequest(${courseId}, ${currentSectionId}, ${section.Section_ID})">Request Exchange to This Section</button>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (!hasOtherSections) {
+                    container.innerHTML += "<p style='text-align:center;'>No other sections available to exchange.</p>";
+                }
+
+                container.innerHTML += `<button class="back-btn" onclick="loadCourses()">⬅️ Back to My Sections</button>`;
+            })
+            .catch(err => {
+                console.error(err);
+                container.innerHTML = "⚠️ Error loading target sections.";
+            });
+    }
+
+    function createRequest(courseId, sectionFrom, sectionTo) {
+        fetch('/api/exchange-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId, sectionFrom, sectionTo })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('msg').innerHTML = data.message;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            loadCourses();
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('msg').innerHTML = "⚠️ Error creating request.";
+        });
+    }
+
+    loadCourses();
+</script>
+
+</body>
+</html>

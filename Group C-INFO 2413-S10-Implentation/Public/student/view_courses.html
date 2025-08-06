@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Enrolled Courses - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Content */
+        h1 {
+            text-align: center;
+            margin: 30px 0 10px 0;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .course-card {
+            background: #ffffff;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-3px);
+        }
+        .course-card strong {
+            display: inline-block;
+            width: 140px;
+        }
+        .back-button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            margin: 30px auto;
+            display: block;
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<h1>Your Enrolled Courses</h1>
+<div class="container" id="courses"></div>
+<button class="back-button" onclick="window.location.href='student_dashboard.html'">← Back to Dashboard</button>
+
+<script>
+    fetch('/api/student/courses')
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('courses');
+            if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                container.innerHTML = "<p style='text-align:center;'>No enrolled courses found.</p>";
+            } else {
+                data.enrolledCourses.forEach(course => {
+                    container.innerHTML += `
+                        <div class="course-card">
+                            <strong>Course ID:</strong> ${course.Course_ID}<br>
+                            <strong>Course Name:</strong> ${course.Course_Name}<br>
+                            <strong>Section:</strong> ${course.section_number}<br>
+                            <strong>Day:</strong> ${course.day_of_week}<br>
+                            <strong>Time:</strong> ${course.start_time} - ${course.end_time}<br>
+                            <strong>Room:</strong> ${course.room_no}<br>
+                            <strong>Mode:</strong> ${course.mode}
+                        </div>
+                    `;
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('courses').innerHTML = "<p style='text-align:center;'>⚠️ Error fetching courses.</p>";
+        });
+</script>
+
+</body>
+</html>

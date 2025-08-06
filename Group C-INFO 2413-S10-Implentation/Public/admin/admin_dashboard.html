@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Grand Lakes University</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar h3 {
+            margin: 15px 20px 5px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s, padding-left 0.3s;
+            font-size: 14px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            padding-left: 25px;
+        }
+        .sidebar a.active-link {
+            background-color: #2980b9;
+            padding-left: 25px;
+        }
+        .sidebar .sub-link {
+            padding-left: 40px;
+            font-size: 13px;
+            color: #ecf0f1;
+        }
+        .sidebar .sub-link:hover {
+            background-color: #3d566e;
+            padding-left: 45px;
+        }
+        .sidebar .sub-link.active-link {
+            background-color: #2980b9;
+            padding-left: 45px;
+        }
+        .logout-btn {
+            margin-top: auto;
+            padding: 12px 20px;
+            background-color: #c0392b;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+        .content {
+            flex: 1;
+            padding: 30px;
+            background-color: #f4f6f8;
+            overflow-y: auto;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card h2 { margin: 10px 0; font-size: 24px; }
+        .card p { margin: 0; color: #7f8c8d; }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        .chart-wrapper {
+            width: 300px;
+            height: 300px;
+            margin: auto;
+        }
+        /* Loader styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loader-overlay" id="pageLoader">
+    <div class="loader"></div>
+</div>
+
+
+
+  <div class="sidebar">
+    <div style="text-align:center; margin-bottom:20px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+        <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" dy=".3em">GLU</text>
+      </svg>
+      <h2 style="margin:5px 0;font-size:20px;color:#ecf0f1;">GLU Admin</h2>
+    </div>
+    <a href="admin_dashboard.html" class="active-link">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+     <a href="update_student.html">🔍 Manage Students</a>
+    <a href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+    <a href="manage_instructor.html">🛠️ Manage Instructors</a>
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+    <div class="logout-btn" onclick="window.location.href='../index.html'">🚪 Logout</div>
+  </div>
+
+
+
+<div class="content">
+    <div class="cards">
+        <div class="card" onclick="window.location.href='report_student_roster.html'">
+            <h2 id="totalStudents">0</h2>
+            <p>Total Students</p>
+        </div>
+        <div class="card" onclick="window.location.href='report_course_enrollment.html'">
+            <h2 id="totalCourses">0</h2>
+            <p>Total Courses</p>
+        </div>
+        <div class="card">
+            <div class="chart-wrapper">
+                <canvas id="programChart"></canvas>
+            </div>
+            <p>Enrollment by Program</p>
+        </div>
+        <div class="card">
+            <div class="chart-wrapper">
+                <canvas id="exchangeChart"></canvas>
+            </div>
+            <p>Exchange Requests Status</p>
+        </div>
+        <div class="card">
+            <div class="chart-wrapper">
+                <canvas id="semesterChart"></canvas>
+            </div>
+            <p>Enrollment by Semester</p>
+        </div>
+        <div class="card">
+            <div class="chart-wrapper">
+                <canvas id="courseChart"></canvas>
+            </div>
+            <p>Top 5 Courses</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const currentPath = window.location.pathname.split("/").pop();
+    const links = document.querySelectorAll('.sidebar a');
+    links.forEach(link => {
+        if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active-link");
+        }
+    });
+
+    // Loader fade-out
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('pageLoader');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    fetch('/api/admin/summary')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('totalStudents').innerText = data.totalStudents;
+            document.getElementById('totalCourses').innerText = data.totalCourses;
+        });
+
+    fetch('/api/admin/report-enrollment-by-program')
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.programs.map(p => p.program);
+            const counts = data.programs.map(p => p.student_count);
+            new Chart(document.getElementById('programChart'), {
+                type: 'pie',
+                data: { labels, datasets: [{ data: counts, backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c'] }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+
+    fetch('/api/admin/exchange-request-status')
+        .then(res => res.json())
+        .then(data => {
+            new Chart(document.getElementById('exchangeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Approved'],
+                    datasets: [{ data: [data.pending, data.approved], backgroundColor: ['#e67e22', '#2ecc71'] }]
+                },
+                options: { plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+
+    fetch('/api/admin/report-enrollment-by-semester')
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.semesters.map(s => s.semester);
+            const counts = data.semesters.map(s => s.student_count);
+            new Chart(document.getElementById('semesterChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Students', data: counts, backgroundColor: '#3498db' }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        });
+
+    fetch('/api/admin/report-course-enrollment')
+        .then(res => res.json())
+        .then(data => {
+            const courseCounts = {};
+            data.enrollments.forEach(e => {
+                courseCounts[e.course_name] = (courseCounts[e.course_name] || 0) + 1;
+            });
+            const sortedCourses = Object.entries(courseCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const labels = sortedCourses.map(c => c[0]);
+            const counts = sortedCourses.map(c => c[1]);
+            new Chart(document.getElementById('courseChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Enrollments', data: counts, backgroundColor: '#2ecc71' }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        });
+</script>
+
+</body>
+</html>

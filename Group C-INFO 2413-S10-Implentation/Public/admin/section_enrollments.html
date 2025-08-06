@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Section Enrollments - GLU</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .sidebar h3 {
+            margin: 15px 20px 5px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s, padding-left 0.3s;
+            font-size: 14px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            padding-left: 25px;
+        }
+        .sidebar a.active-link {
+            background-color: #2980b9;
+            padding-left: 25px;
+        }
+        .sidebar .sub-link {
+            padding-left: 40px;
+            font-size: 13px;
+            color: #ecf0f1;
+        }
+        .sidebar .sub-link:hover {
+            background-color: #3d566e;
+            padding-left: 45px;
+        }
+        .sidebar .sub-link.active-link {
+            background-color: #2980b9;
+            padding-left: 45px;
+        }
+        .logout-btn {
+            margin-top: auto;
+            padding: 12px 20px;
+            background-color: #c0392b;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+        .content { flex: 1; padding: 40px; background-color: #f4f6f8; overflow-y: auto; position: relative; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        a.enroll-link { color: #3498db; text-decoration: none; }
+        a.enroll-link:hover { text-decoration: underline; }
+
+        /* Back button */
+        .back-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin-bottom: 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .back-btn:hover {
+            background-color: #2c3e50;
+        }
+
+        /* Loader */
+        .loader-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        #courseList { list-style-type: disc; padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+                <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+            </svg>
+            <h2 style="margin: 5px 0 0 0; font-size: 20px; color: #ecf0f1;">GLU Admin</h2>
+        </div>
+
+        <a href="admin_dashboard.html">🏠 Dashboard</a>
+        <h3>Manage</h3>
+        <a href="create_student.html">👨‍🎓 Create Student</a>
+        <a href="create_course.html">📚 Create Course</a>
+        <a href="update_course.html">✏️ Update Course</a>
+        <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+
+        <h3>Reports</h3>
+        <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+        <a class="sub-link active-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+
+        <div class="logout-btn" onclick="window.location.href='../index.html'">🚪 Logout</div>
+    </div>
+
+    <div class="content">
+        <button class="back-btn" onclick="history.back()">← Back</button>
+        <h1>Students Enrolled in Section</h1>
+
+        <div id="loader" class="loader-overlay"><div class="loader"></div></div>
+
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Program</th><th>Semester</th><th>Enrollments</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Courses</h3>
+            <ul id="courseList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const sectionId = params.get('sectionId');
+        let students = [];
+
+        if (!sectionId) {
+            alert("No section ID provided!");
+        } else {
+            document.getElementById('loader').style.display = 'flex';
+            fetch(`/api/admin/section-enrollments/${sectionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    students = data.students;
+                    renderTable().then(() => {
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    document.getElementById('loader').style.display = 'none';
+                });
+        }
+
+        async function renderTable() {
+            const tbody = document.querySelector("#studentTable tbody");
+            tbody.innerHTML = "";
+
+            for (const s of students) {
+                const res = await fetch(`/api/admin/student-courses/${s.student_id}`);
+                const data = await res.json();
+                const count = data.courses.length;
+
+                const enrollText = count > 0 
+                    ? `<a href="#" class="enroll-link" onclick="showCourses(${s.student_id}, '${s.first_name} ${s.last_name}'); return false;">${count}</a>`
+                    : "0";
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${s.student_id}</td>
+                        <td>${s.first_name}</td>
+                        <td>${s.last_name}</td>
+                        <td>${s.email}</td>
+                        <td>${s.program}</td>
+                        <td>${s.semester}</td>
+                        <td>${enrollText}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function showCourses(studentId, studentName) {
+            fetch(`/api/admin/student-courses/${studentId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const modal = document.getElementById("courseModal");
+                    const modalTitle = document.getElementById("modalTitle");
+                    const courseList = document.getElementById("courseList");
+                    
+                    modalTitle.textContent = `Courses for ${studentName}`;
+                    courseList.innerHTML = "";
+
+                    if (data.courses.length === 0) {
+                        courseList.innerHTML = "<li>No courses enrolled.</li>";
+                    } else {
+                        data.courses.forEach(course => {
+                            const li = document.createElement("li");
+                            li.textContent = `${course.course_name} (Course ID: ${course.Course_ID}, Section: ${course.section_number})`;
+                            courseList.appendChild(li);
+                        });
+                    }
+
+                    modal.style.display = "block";
+                })
+                .catch(err => {
+                    console.error("Error fetching courses:", err);
+                    alert("Error loading courses. Please try again.");
+                });
+        }
+
+        function closeModal() {
+            document.getElementById("courseModal").style.display = "none";
+        }
+    </script>
+</body>
+</html>

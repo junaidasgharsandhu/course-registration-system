@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Course - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Container & Cards */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .filters input, .filters button {
+            padding: 10px;
+            margin: 8px 5px;
+            font-size: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .filters button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background-color: #219150;
+            transform: translateY(-2px);
+        }
+
+        .course-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #fafafa;
+            transition: transform 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-3px);
+        }
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .course-header h3 {
+            margin: 0;
+            color: #3498db;
+        }
+        .course-details {
+            font-size: 14px;
+            color: #555;
+        }
+        .sections-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .section-card {
+            flex: 1 1 250px;
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .section-card button {
+            width: 100%;
+            margin-top: 8px;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .section-card button:hover {
+            background-color: #2980b9;
+        }
+        .back-button {
+            background-color: #e74c3c;
+            width: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+        .back-button:hover {
+            background-color: #c0392b;
+        }
+
+        /* Toast styles */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #27ae60; /* Green default */
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(20px);
+            z-index: 9999;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.error {
+            background-color: #c0392b; /* Red for errors */
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Search and Add Course</h2>
+    <div class="filters">
+        <input type="number" id="courseId" placeholder="Course ID (optional)">
+        <input type="text" id="courseName" placeholder="Course Name (optional)">
+        <input type="text" id="department" placeholder="Department (optional)">
+        <button onclick="searchCourse()">Search Courses</button>
+    </div>
+    <div id="courseInfo"></div>
+    <button class="back-button" onclick="window.location.href='student_dashboard.html'">← Back to Dashboard</button>
+</div>
+
+<script>
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        if (isError) {
+            toast.classList.add('error');
+        }
+        toast.innerText = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 500);
+        }, 3000);
+    }
+
+    function searchCourse() {
+        const courseId = document.getElementById('courseId').value;
+        const name = document.getElementById('courseName').value;
+        const department = document.getElementById('department').value;
+        const courseInfoDiv = document.getElementById('courseInfo');
+
+        courseInfoDiv.innerHTML = "Loading...";
+
+        fetch(`/api/student/search-course?courseId=${encodeURIComponent(courseId)}&name=${encodeURIComponent(name)}&department=${encodeURIComponent(department)}`)
+            .then(res => res.json())
+            .then(data => {
+                courseInfoDiv.innerHTML = "";
+
+                if (!data.courses || data.courses.length === 0) {
+                    showToast("No matching courses found.", true);
+                    return;
+                }
+
+                data.courses.forEach(course => {
+                    let prereqText = course.prerequisite ? course.prerequisite : "None";
+
+                    const courseCard = document.createElement("div");
+                    courseCard.className = "course-card";
+                    courseCard.innerHTML = `
+                        <div class="course-header">
+                            <h3>${course.name}</h3>
+                            <span>Course ID: ${course.Course_ID}</span>
+                        </div>
+                        <div class="course-details">
+                            ${course.description}<br>
+                            <strong>Credits:</strong> ${course.credits} | 
+                            <strong>Department:</strong> ${course.department} | 
+                            <strong>Semester:</strong> ${course.semester} | 
+                            <strong>Prerequisite:</strong> ${prereqText}
+                        </div>
+                        <div id="sections-${course.Course_ID}" class="sections-container"><em>Loading sections...</em></div>
+                    `;
+
+                    courseInfoDiv.appendChild(courseCard);
+
+                    fetch(`/api/student/course-sections/${course.Course_ID}`)
+                        .then(res => res.json())
+                        .then(sectionData => {
+                            const sectionDiv = document.getElementById(`sections-${course.Course_ID}`);
+                            if (!sectionData.sections || sectionData.sections.length === 0) {
+                                sectionDiv.innerHTML = "<p>No sections available.</p>";
+                                return;
+                            }
+
+                            sectionDiv.innerHTML = "";
+                            sectionData.sections.forEach(section => {
+                                const secCard = document.createElement("div");
+                                secCard.className = "section-card";
+                                secCard.innerHTML = `
+                                    <strong>Section:</strong> ${section.section_number}<br>
+                                    <strong>Day:</strong> ${section.day_of_week}<br>
+                                    <strong>Time:</strong> ${section.start_time} - ${section.end_time}<br>
+                                    <strong>Room:</strong> ${section.room_no}<br>
+                                    <strong>Mode:</strong> ${section.mode}<br>
+                                    <button onclick="addCourse(${course.Course_ID}, ${section.Section_ID}, '${course.name}')">Add This Section</button>
+                                `;
+                                sectionDiv.appendChild(secCard);
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            document.getElementById(`sections-${course.Course_ID}`).innerHTML = "<p>Error loading sections.</p>";
+                        });
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("⚠️ Error searching courses.", true);
+            });
+    }
+
+    function addCourse(courseId, sectionId, courseName) {
+        fetch('/api/student/add-course', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId, sectionId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, false); // ✅ Green
+            } else {
+                showToast(data.message, true);  // 🔴 Red
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("⚠️ Error adding course.", true);
+        });
+    }
+</script>
+
+</body>
+</html>

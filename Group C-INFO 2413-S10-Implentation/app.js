@@ -70,10 +70,10 @@ app.post('/api/login/student', async (req, res) => {
         return res.status(400).json({ message: 'Please complete the reCAPTCHA.' });
     }
 
-    const secretKey = "6LeYBZErAAAAAAdFD0uyxyJMMKuITv9PnQ-m0IHl";
+    const secretKey = "6LeYBZErAAAAAAdFD0uyxyJMMKuITv9PnQ-m0IHl"; // 
 
     try {
-        // Step 1: Verify CAPTCHA with Google
+        // Verify CAPTCHA with Google
         const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`;
         const response = await axios.post(verifyURL);
         const data = response.data;
@@ -82,7 +82,7 @@ app.post('/api/login/student', async (req, res) => {
             return res.status(403).json({ message: 'Failed reCAPTCHA verification.' });
         }
 
-        // Step 2: Look up student by email
+        // Continue with login
         const sql = "SELECT * FROM Student WHERE email = ?";
         db.query(sql, [email], async (err, results) => {
             if (err) {
@@ -96,13 +96,12 @@ app.post('/api/login/student', async (req, res) => {
 
             const user = results[0];
 
-            // ✅ Step 3: Compare hashed password using bcrypt
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
+            // TODO: Use bcrypt for hashed passwords in production
+            if (password !== user.password) {
                 return res.status(401).json({ message: "Invalid password." });
             }
 
-            // ✅ Step 4: Create session and respond
+            // ✅ Save user session
             req.session.userId = user.student_id;
             req.session.role = 'student';
             req.session.firstName = user.first_name;
@@ -119,7 +118,6 @@ app.post('/api/login/student', async (req, res) => {
         return res.status(500).json({ message: 'reCAPTCHA verification failed.' });
     }
 });
-
 
 // ---------------- Admin Login Endpoint ---------------- //
 app.post('/api/login/admin', async (req, res) => {

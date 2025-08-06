@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Create Instructor - Grand Lakes University</title>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+    /* Loader */
+    .loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index:1000; transition: opacity 0.5s ease; }
+    .loader { border:6px solid #f3f3f3; border-top:6px solid #3498db; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Sidebar */
+    .sidebar { width:220px; background:#2c3e50; color:white; display:flex; flex-direction:column; padding-top:20px; }
+    .sidebar h3 { margin:15px 20px 5px; font-size:14px; color:#bdc3c7; text-transform:uppercase; letter-spacing:1px; }
+    .sidebar a { padding:12px 20px; color:white; text-decoration:none; display:block; transition:background 0.3s,padding-left 0.3s; font-size:14px; }
+    .sidebar a:hover { background:#34495e; padding-left:25px; }
+    .sidebar a.active-link { background:#2980b9; padding-left:25px; }
+    .sidebar .sub-link { padding-left:40px; font-size:13px; color:#ecf0f1; }
+    .sidebar .sub-link:hover { background:#3d566e; padding-left:45px; }
+    .sidebar .sub-link.active-link { background:#2980b9; padding-left:45px; }
+    .logout-btn { margin-top:auto; padding:12px 20px; background:#c0392b; text-align:center; cursor:pointer; transition:background 0.3s; }
+    .logout-btn:hover { background:#a93226; }
+
+    /* Content */
+    .content { flex:1; padding:30px; background:#f4f6f8; overflow-y:auto; }
+    .content h1 { margin-top:0; color:#2c3e50; }
+
+    /* Form */
+    .form-wrapper { max-width:500px; margin:auto; background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    .form-group { position:relative; margin-bottom:20px; }
+    .form-group input,
+    .form-group select {
+      width:100%; padding:12px; font-size:15px;
+      border:1px solid #ccc; border-radius:5px; box-sizing:border-box;
+      transition:border-color 0.3s,box-shadow 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color:#3498db; box-shadow:0 0 5px rgba(52,152,219,0.5); outline:none;
+    }
+    .form-group label {
+      position:absolute; top:12px; left:12px;
+      background:white; padding:0 4px; color:#999;
+      transition:all 0.2s ease;
+    }
+    .form-group input:not(:placeholder-shown)+label,
+    .form-group select:not([value=""]) + label {
+      top:-8px; left:8px; font-size:12px; color:#3498db;
+    }
+
+    /* Buttons */
+    .btn { display:inline-block; padding:12px 20px; font-size:15px; border:none; border-radius:5px; cursor:pointer; transition:background 0.3s,transform 0.2s; }
+    .btn.create { background:#3498db; color:white; }
+    .btn.create:hover { background:#2980b9; transform:translateY(-2px); }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:30px; right:30px;
+      background:#27ae60; color:white; padding:15px 25px; border-radius:8px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.2);
+      opacity:0; transform:translateY(20px); transition:opacity 0.5s,transform 0.5s; z-index:9999;
+    }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.error { background:#c0392b; }
+  </style>
+</head>
+<body>
+  <div class="loader-overlay" id="pageLoader"><div class="loader"></div></div>
+
+  <div class="sidebar">
+    <div style="text-align:center; margin-bottom:20px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+        <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" dy=".3em">GLU</text>
+      </svg>
+      <h2 style="margin:5px 0;font-size:20px;color:#ecf0f1;">GLU Admin</h2>
+    </div>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+     <a href="update_student.html">🔍 Manage Students</a>
+    <a href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a class="active-link" href="create_instructor.html">👩‍🏫 Create Instructor</a>
+    <a href="manage_instructor.html">🛠️ Manage Instructors</a>
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+    <div class="logout-btn" onclick="window.location.href='../index.html'">🚪 Logout</div>
+  </div>
+
+
+
+  <div class="content">
+    <div class="form-wrapper">
+      <h1>Create Instructor</h1>
+      <form id="formCreate" onsubmit="handleCreate(event)">
+        <div class="form-group">
+          <input id="firstName" placeholder=" " required>
+          <label for="firstName">First Name</label>
+        </div>
+        <div class="form-group">
+          <input id="lastName" placeholder=" " required>
+          <label for="lastName">Last Name</label>
+        </div>
+        <div class="form-group">
+          <input type="email" id="email" placeholder=" " required>
+          <label for="email">Email</label>
+        </div>
+        <div class="form-group">
+          <select id="department" required>
+            <option value="" disabled selected></option>
+            <option>IT</option>
+            <option>BUSI</option>
+            <option>ARTS</option>
+          </select>
+          <label for="department">Department</label>
+        </div>
+        <button type="submit" class="btn create">Create</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const loader = document.getElementById('pageLoader');
+    window.addEventListener('load', () => {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    function showToast(msg, isError=false) {
+      const t = document.createElement('div');
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.innerText = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 100);
+      setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => document.body.removeChild(t), 500);
+      }, 3000);
+    }
+
+    function handleCreate(e) {
+      e.preventDefault();
+      const data = {
+        firstName:  document.getElementById('firstName').value.trim(),
+        lastName:   document.getElementById('lastName').value.trim(),
+        email:      document.getElementById('email').value.trim(),
+        department: document.getElementById('department').value
+      };
+      loader.style.display = 'flex';
+      loader.style.opacity = '1';
+      fetch('/api/admin/create-instructor', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(resp => {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+        if (resp.success) {
+          showToast(`"${resp.name}" created (ID: ${resp.id})`);
+          document.getElementById('formCreate').reset();
+        } else {
+          showToast(resp.message, true);
+        }
+      })
+      .catch(err => {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+        console.error(err);
+        showToast('Server error.', true);
+      });
+    }
+  </script>
+</body>
+</html>

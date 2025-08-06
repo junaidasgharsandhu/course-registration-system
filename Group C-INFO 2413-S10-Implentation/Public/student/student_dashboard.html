@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Welcome header */
+        .header-welcome {
+            text-align: center;
+            margin: 30px 0 10px 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        /* Cards */
+        .nav-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 30px 20px;
+        }
+
+        .nav-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 15px;
+            padding: 20px 30px;
+            text-align: center;
+            width: 220px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-card h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div id="welcomeContainer" class="header-welcome">👋 Welcome!</div>
+
+<div class="nav-container">
+    <div class="nav-card" onclick="window.location.href='schedule.html'">
+        <h3>View Weekly Schedule</h3> 
+    </div>
+    <div class="nav-card" onclick="window.location.href='add_course.html'">
+        <h3>Add Course</h3>
+    </div>
+    <div class="nav-card" onclick="window.location.href='drop_course.html'">
+        <h3>Drop Course</h3>
+    </div>
+    <div class="nav-card" onclick="window.location.href='student_create_exchange.html'">
+        <h3>Request Section Exchange</h3>
+    </div>
+    <div class="nav-card" onclick="window.location.href='student_view_requests.html'">
+        <h3>Available Exchange Requests</h3>
+    </div>
+    <div class="nav-card" onclick="window.location.href='student_my_requests.html'">
+        <h3>My Exchange Requests</h3>
+    </div>
+    <div class="nav-card" onclick="window.location.href='student_transcript.html'">
+        <h3>View Transcript</h3>
+    </div>  
+
+</div>
+
+<script>
+    function loadWelcome() {
+        fetch('/api/session-info')
+            .then(res => res.json())
+            .then(data => {
+                if (data.firstName) {
+                    document.getElementById('welcomeContainer').innerHTML = `👋 Welcome, ${data.firstName}!`;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    }
+
+    window.onload = loadWelcome;
+</script>
+
+</body>
+</html>

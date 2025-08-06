@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Profile - Grand Lakes University</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px;
+        }
+
+        .content h1 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input, button {
+            padding: 10px;
+            width: 95%;
+            font-size: 15px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: white;
+            color: #2c3e50;
+        }
+
+        button {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .readonly {
+            background-color: #f0f0f0;
+            color: #777;
+            font-style: italic;
+            border: 1px dashed #ccc;
+        }
+
+        .message {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="content">
+    <h1>My Profile</h1>
+    <form id="profileForm">
+        <div class="form-group">
+            <input type="text" id="firstName" placeholder="First Name" readonly class="readonly">
+        </div>
+        <div class="form-group">
+            <input type="text" id="lastName" placeholder="Last Name" readonly class="readonly">
+        </div>
+        <div class="form-group">
+            <input type="date" id="dob" placeholder="Date of Birth" readonly class="readonly">
+        </div>
+        <div class="form-group">
+            <input type="text" id="street" placeholder="Street Address">
+        </div>
+        <div class="form-group">
+            <input type="text" id="city" placeholder="City">
+        </div>
+        <div class="form-group">
+            <input type="text" id="province" placeholder="Province">
+        </div>
+        <div class="form-group">
+            <input type="text" id="postalCode" placeholder="Postal Code">
+        </div>
+        <div class="form-group">
+            <input type="email" id="email" placeholder="Email">
+        </div>
+        <div class="form-group">
+            <input type="text" id="program" placeholder="Program" readonly class="readonly">
+        </div>
+        <div class="form-group">
+            <input type="text" id="semester" placeholder="Semester" readonly class="readonly">
+        </div>
+        <div class="form-group">
+            <button type="button" onclick="updateProfile()">Save Changes</button>
+        </div>
+    </form>
+    <div class="message" id="message"></div>
+</div>
+
+<script>
+    function toISODate(raw) {
+        if (!raw) return '';
+        // if comes as "YYYY-MM-DD..." or "YYYY-MM-DD"
+        if (raw.includes('T') || raw.includes(' ')) {
+            return raw.split(/T| /)[0];
+        }
+        // if comes as "MM/DD/YYYY"
+        if (raw.includes('/')) {
+            const [m,d,y] = raw.split('/');
+            return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+        }
+        // assume already "YYYY-MM-DD"
+        return raw;
+    }
+
+    function loadProfile() {
+        fetch('/api/student/profile')
+            .then(res => res.json())
+            .then(data => {
+                const s = data.student;
+                if (!s) return;
+                document.getElementById('firstName').value = s.first_name;
+                document.getElementById('lastName').value  = s.last_name;
+                document.getElementById('dob').value       = toISODate(s.date_of_birth);
+                document.getElementById('street').value    = s.street     || "";
+                document.getElementById('city').value      = s.city       || "";
+                document.getElementById('province').value  = s.province   || "";
+                document.getElementById('postalCode').value= s.postal_code|| "";
+                document.getElementById('email').value     = s.email;
+                document.getElementById('program').value   = s.program;
+                document.getElementById('semester').value  = s.semester;
+            })
+            .catch(err => console.error("Error loading profile:", err));
+    }
+
+    function updateProfile() {
+        const payload = {
+            street:      document.getElementById('street').value,
+            city:        document.getElementById('city').value,
+            province:    document.getElementById('province').value,
+            postal_code: document.getElementById('postalCode').value,
+            email:       document.getElementById('email').value
+        };
+
+        fetch('/api/student/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            document.getElementById('message').innerHTML = resp.message
+                ? `✅ ${resp.message}`
+                : `❌ Update failed.`;
+        })
+        .catch(err => {
+            console.error("Error updating profile:", err);
+            document.getElementById('message').innerHTML = "❌ Error updating profile.";
+        });
+    }
+
+    window.onload = loadProfile;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drop Course - Grand Lakes University</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #2c3e50;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        .logo-container h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #c0392b;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Container & Cards */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .course-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            background: #fafafa;
+            transition: transform 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-3px);
+        }
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .course-header h3 {
+            margin: 0;
+            color: #3498db;
+        }
+        .course-details {
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+        }
+        .course-card button {
+            margin-top: 10px;
+            width: 100%;
+            background-color: #c0392b;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background-color 0.3s;
+        }
+        .course-card button:hover {
+            background-color: #a93226;
+        }
+        .back-button {
+            background-color: #3498db;
+            color: white;
+            width: 200px;
+            margin: 0 auto;
+            display: block;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Toast styles */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #27ae60; /* Green default */
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(20px);
+            z-index: 9999;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.error {
+            background-color: #c0392b; /* Red for errors */
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🌟 Navbar -->
+<div class="navbar">
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>GLU Student Portal</h2>
+    </div>
+    <div class="nav-links">
+        <a href="student_dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
+        <a href="schedule.html">My Courses</a>
+        <a href="student_transcript.html">Transcript</a>
+        <a href="../index.html" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Drop a Course</h2>
+    <div id="courses"></div>
+    <button class="back-button" onclick="window.location.href='student_dashboard.html'">← Back to Dashboard</button>
+</div>
+
+<script>
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        if (isError) {
+            toast.classList.add('error');
+        }
+        toast.innerText = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 500);
+        }, 3000);
+    }
+
+    function loadCourses() {
+        fetch('/api/student/courses')
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('courses');
+                container.innerHTML = "";
+
+                if (!data.enrolledCourses || data.enrolledCourses.length === 0) {
+                    container.innerHTML = "<p style='text-align:center;'>No enrolled courses found.</p>";
+                    return;
+                }
+
+                data.enrolledCourses.forEach(course => {
+                    const courseCard = document.createElement("div");
+                    courseCard.className = "course-card";
+                    courseCard.innerHTML = `
+                        <div class="course-header">
+                            <h3>${course.Course_Name}</h3>
+                            <span>Course ID: ${course.Course_ID}</span>
+                        </div>
+                        <div class="course-details">
+                            <strong>Section:</strong> ${course.section_number} | 
+                            <strong>Day:</strong> ${course.day_of_week} | 
+                            <strong>Time:</strong> ${course.start_time} - ${course.end_time} | 
+                            <strong>Room:</strong> ${course.room_no} | 
+                            <strong>Mode:</strong> ${course.mode}
+                        </div>
+                        <button onclick="dropCourse(${course.Course_ID}, ${course.Section_ID})">Drop This Course</button>
+                    `;
+                    container.appendChild(courseCard);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('courses').innerHTML = "<p style='text-align:center;'>⚠️ Error loading courses.</p>";
+            });
+    }
+
+    function dropCourse(courseId, sectionId) {
+        fetch('/api/student/drop-course', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId, sectionId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, false); // ✅ Green
+            } else {
+                showToast(data.message, true);  // 🔴 Red
+            }
+            loadCourses(); // Refresh list after dropping
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("⚠️ Error dropping course.", true);
+        });
+    }
+
+    // Initial load
+    loadCourses();
+</script>
+
+</body>
+</html>

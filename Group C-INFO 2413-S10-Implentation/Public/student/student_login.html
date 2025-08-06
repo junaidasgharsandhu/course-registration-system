@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Login - Grand Lakes University</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/diagmonds-light.png');
+            opacity: 0.1;
+            z-index: 0;
+        }
+        .login-container {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .login-container svg {
+            margin-bottom: 15px;
+        }
+        .login-container h2 {
+            margin-top: 10px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+        input {
+            width: 85%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        button {
+            width: 90%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .error {
+            color: red;
+            margin-top: 15px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            color: #3498db;
+            border: 2px solid #3498db;
+            background-color: transparent;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .captcha-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+     } 
+
+        .back-btn:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Inline SVG Logo -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="26" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" dy=".3em">GLU</text>
+        </svg>
+        <h2>Student Login</h2>
+        <form onsubmit="loginStudent(event)">
+            <input type="email" id="email" placeholder="Email" required><br>
+            <input type="password" id="password" placeholder="Password" required><br>
+            
+            <div class="captcha-wrapper">
+            <div class="g-recaptcha" data-sitekey="6LeYBZErAAAAAPzOoyiz9Bt-kIY8IVvVWLC38VIs"></div>
+            </div>
+
+            <button type="submit">Login</button><br><br>
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+        </form>
+
+
+        <div id="result"></div>
+        <a href="../index.html" class="back-btn">← Back to Home</a>
+    </div>
+
+    <script>
+    function loginStudent(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const captchaToken = grecaptcha.getResponse(); // 🔐 This is the missing line
+        const resultDiv = document.getElementById('result');
+
+        if (!captchaToken) {
+            resultDiv.innerHTML = "<div class='error'>⚠️ Please complete the reCAPTCHA.</div>";
+            return;
+        }
+
+        fetch('/api/login/student', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                'g-recaptcha-response': captchaToken // ✅ Send token in body
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "Login successful") {
+                window.location.href = "student_dashboard.html";
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                grecaptcha.reset(); // 🌀 Reset CAPTCHA after error
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            resultDiv.innerHTML = "<div class='error'>⚠️ Error during login.</div>";
+            grecaptcha.reset(); // 🌀 Reset CAPTCHA after error
+        });
+    }
+</script>
+</body>
+</html>

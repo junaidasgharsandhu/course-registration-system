@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Create Course - Grand Lakes University</title>
+  <style>
+    /* Reset & Base */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; }
+
+    /* Loader */
+    .loader-overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000; transition: opacity .5s ease;
+    }
+    .loader {
+      border: 6px solid #f3f3f3; border-top: 6px solid #3498db;
+      border-radius: 50%; width: 60px; height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background: #2c3e50; color: white;
+      display: flex; flex-direction: column; padding-top: 20px;
+    }
+    .sidebar h3 {
+      margin: 15px 20px 5px; font-size: 14px;
+      color: #bdc3c7; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .sidebar a {
+      padding: 12px 20px; color: white; text-decoration: none;
+      display: block; transition: background .3s, padding-left .3s;
+      font-size: 14px;
+    }
+    .sidebar a:hover { background: #34495e; padding-left: 25px; }
+    .sidebar a.active-link { background: #2980b9; padding-left: 25px; }
+    .sidebar .sub-link {
+      padding-left: 40px; font-size: 13px; color: #ecf0f1;
+    }
+    .sidebar .sub-link:hover { background: #3d566e; padding-left: 45px; }
+    .sidebar .sub-link.active-link { background: #2980b9; padding-left: 45px; }
+    .logout-btn {
+      margin-top: auto; padding: 12px 20px; background: #c0392b;
+      text-align: center; cursor: pointer; transition: background .3s;
+    }
+    .logout-btn:hover { background: #a93226; }
+
+    /* Content */
+    .content {
+      flex: 1; padding: 40px; background: #f4f6f8;
+      overflow-y: auto; display: flex; justify-content: center; align-items: flex-start;
+    }
+    .form-wrapper {
+      background: #fff; padding: 30px; border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      max-width: 600px; width: 100%;
+    }
+    .form-wrapper h1 {
+      margin-top: 0; margin-bottom: 20px; color: #2c3e50;
+      text-align: center;
+    }
+
+    /* Floating Labels */
+    .form-group { position: relative; margin-bottom: 20px; }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: 12px 10px 8px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 5px; background: #fff;
+      outline: none; transition: border-color .3s, box-shadow .3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #3498db; box-shadow: 0 0 5px rgba(52,152,219,0.5);
+    }
+    .form-group label {
+      position: absolute; top: 50%; left: 10px;
+      transform: translateY(-50%); pointer-events: none;
+      color: #777; font-size: 15px; background: #fff;
+      padding: 0 4px; transition: all .2s ease;
+    }
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label,
+    .form-group select:focus + label,
+    .form-group select:not([value=""]) + label {
+      top: -8px; font-size: 12px; color: #3498db;
+    }
+
+    /* Buttons */
+    .btn {
+      display: block; width: 100%; padding: 12px;
+      font-size: 15px; color: #fff; border: none;
+      border-radius: 5px; cursor: pointer; margin-top: 10px;
+      transition: background .3s, transform .2s;
+    }
+    .btn:disabled { background: #aaa; cursor: not-allowed; }
+    .btn.create { background: #3498db; }
+    .btn.create:hover:not(:disabled) {
+      background: #2980b9; transform: translateY(-2px);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px;
+      background: #27ae60; color: #fff; padding: 15px 25px;
+      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .5s, transform .5s; z-index: 9999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #c0392b; }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div class="loader-overlay" id="pageLoader"><div class="loader"></div></div>
+
+
+
+
+  
+  <div class="sidebar">
+    <div style="text-align:center; margin-bottom:20px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="#3498db" stroke-width="4"/>
+        <text x="50%" y="54%" text-anchor="middle" fill="#3498db" font-size="28" dy=".3em">GLU</text>
+      </svg>
+      <h2 style="margin:5px 0;font-size:20px;color:#ecf0f1;">GLU Admin</h2>
+    </div>
+    <a href="admin_dashboard.html">🏠 Dashboard</a>
+    <h3>Manage</h3>
+    <a href="create_student.html">👨‍🎓 Create Student</a>
+     <a href="update_student.html">🔍 Manage Students</a>
+    <a class="active-link" href="create_course.html">📚 Create Course</a>
+    <a href="update_course.html">✏️ Update Course</a>
+    <a href="create_instructor.html">👩‍🏫 Create Instructor</a>
+    <a href="manage_instructor.html">🛠️ Manage Instructors</a>
+    <h3>Reports</h3>
+    <a class="sub-link" href="report_student_roster.html">📄 Student Roster</a>
+    <a class="sub-link" href="report_course_enrollment.html">📘 Course Enrollment</a>
+    <div class="logout-btn" onclick="window.location.href='../index.html'">🚪 Logout</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <div class="form-wrapper">
+      <h1>Create Course</h1>
+      <form id="courseForm" onsubmit="submitCourse(event)">
+        <div class="form-group">
+          <input type="text" id="courseName" placeholder=" " required>
+          <label for="courseName">Course Name</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="description" placeholder=" " required>
+          <label for="description">Description</label>
+        </div>
+        <div class="form-group">
+          <select id="credits" required>
+            <option value="" disabled selected></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+          <label for="credits">Credits</label>
+        </div>
+        <div class="form-group">
+          <select id="department" required>
+            <option value="" disabled selected></option>
+            <option value="IT">IT</option>
+            <option value="BUSI">BUSI</option>
+            <option value="ARTS">ARTS</option>
+          </select>
+          <label for="department">Department</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="semester" placeholder=" " required>
+          <label for="semester">Semester (e.g., Fall2025)</label>
+        </div>
+        <div class="form-group">
+          <select id="prerequisite">
+            <option value="" selected>No Prerequisite</option>
+          </select>
+          <label for="prerequisite">Prerequisite</label>
+        </div>
+        <button type="submit" class="btn create">Create Course</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Toast helper
+    function showToast(msg, isError = false) {
+      const t = document.createElement('div');
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 100);
+      setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 500);
+      }, 3000);
+    }
+
+    // Loader fade-out
+    const loader = document.getElementById('pageLoader');
+    window.addEventListener('load', () => {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    });
+
+    // Populate prerequisite dropdown
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch('/api/admin/all-courses')
+        .then(res => res.json())
+        .then(data => {
+          const sel = document.getElementById('prerequisite');
+          data.courses.forEach(c => {
+            const o = document.createElement('option');
+            o.value = c.name;
+            o.textContent = c.name;
+            sel.appendChild(o);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Error loading prerequisites', true);
+        });
+    });
+
+    // Submit handler
+    function submitCourse(e) {
+      e.preventDefault();
+      const payload = {
+        name:         document.getElementById('courseName').value.trim(),
+        description:  document.getElementById('description').value.trim(),
+        credits:      document.getElementById('credits').value,
+        department:   document.getElementById('department').value,
+        semester:     document.getElementById('semester').value.trim(),
+        prerequisite: document.getElementById('prerequisite').value || null
+      };
+      fetch('/api/admin/create-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.success) {
+          showToast(`"${resp.courseName}" created (ID: ${resp.courseId})`);
+          document.getElementById('courseForm').reset();
+        } else {
+          showToast(resp.message, true);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('Server error', true);
+      });
+    }
+  </script>
+</body>
+</html>
+```
