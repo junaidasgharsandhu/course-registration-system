@@ -73,7 +73,7 @@ app.post('/api/login/student', async (req, res) => {
     const secretKey = "6LeYBZErAAAAAAdFD0uyxyJMMKuITv9PnQ-m0IHl";
 
     try {
-        // Step 1: Verify CAPTCHA with Google
+        // Step 1: Verify reCAPTCHA
         const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captcha}`;
         const response = await axios.post(verifyURL);
         const data = response.data;
@@ -82,9 +82,9 @@ app.post('/api/login/student', async (req, res) => {
             return res.status(403).json({ message: 'Failed reCAPTCHA verification.' });
         }
 
-        // Step 2: Look up student by email
+        // Step 2: Check credentials
         const sql = "SELECT * FROM Student WHERE email = ?";
-        db.query(sql, [email], async (err, results) => {
+        db.query(sql, [email], (err, results) => {
             if (err) {
                 console.error("Database error:", err);
                 return res.status(500).json({ error: "Internal server error" });
@@ -96,13 +96,12 @@ app.post('/api/login/student', async (req, res) => {
 
             const user = results[0];
 
-            // ✅ Step 3: Compare hashed password using bcrypt
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
+            // Step 3: Plaintext password check
+            if (password !== user.password) {
                 return res.status(401).json({ message: "Invalid password." });
             }
 
-            // ✅ Step 4: Create session and respond
+            // Step 4: Create session and respond
             req.session.userId = user.student_id;
             req.session.role = 'student';
             req.session.firstName = user.first_name;
@@ -843,7 +842,7 @@ app.get('/api/admin/section-overview', (req, res) => {
 // ----------------------
 // Create Student API
 // ----------------------
-app.post('/api/admin/create-student', async (req, res) => {
+app.post('/api/admin/create-student', (req, res) => {
   const {
     first_name,
     last_name,
@@ -858,7 +857,7 @@ app.post('/api/admin/create-student', async (req, res) => {
     semester
   } = req.body;
 
-  // 1) Validate required
+  // 1) Validate required fields
   if (
     !first_name || !last_name ||
     !email || !password ||
@@ -871,87 +870,82 @@ app.post('/api/admin/create-student', async (req, res) => {
     });
   }
 
-  // 2) Duplicate-email check
+  // 2) Check for duplicate email
   db.query(
     'SELECT COUNT(*) AS cnt FROM Student WHERE email = ?',
     [email],
-    async (err, rows) => {
+    (err, rows) => {
       if (err) {
         console.error('Email check error:', err);
         return res.status(500).json({ success: false, message: 'Server error.' });
       }
+
       if (rows[0].cnt > 0) {
         return res.status(400).json({ success: false, message: 'Email is already registered.' });
       }
 
-      try {
-        // 3) Hash password
-        const hash = await bcrypt.hash(password, 10);
+      // 3) Insert student with plaintext password
+      const sql = `
+        INSERT INTO Student
+          (password, first_name, last_name, date_of_birth,
+           street, city, province, postal_code,
+           email, program, semester)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      db.query(
+        sql,
+        [
+          password, // Store password as-is
+          first_name,
+          last_name,
+          date_of_birth,
+          street   || null,
+          city     || null,
+          province || null,
+          postal_code || null,
+          email,
+          program,
+          semester
+        ],
+        (err2, result) => {
+          if (err2) {
+            console.error('Create Student Error:', err2);
+            return res.status(500).json({ success: false, message: 'Failed to create student.' });
+          }
 
-        // 4) Insert student
-        const sql = `
-          INSERT INTO Student
-            (password, first_name, last_name, date_of_birth,
-             street, city, province, postal_code,
-             email, program, semester)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        db.query(
-          sql,
-          [
-            hash,
-            first_name,
-            last_name,
-            date_of_birth,
-            street   || null,
-            city     || null,
-            province || null,
-            postal_code || null,
-            email,
-            program,
-            semester
-          ],
-          (err2, result) => {
-            if (err2) {
-              console.error('Create Student Error:', err2);
-              return res.status(500).json({ success: false, message: 'Failed to create student.' });
-            }
-
-            // 5) Fetch and return the new record (sans password)
-            db.query(
-              `SELECT
-                 student_id,
-                 first_name,
-                 last_name,
-                 email,
-                 program,
-                 semester
-               FROM Student
-               WHERE student_id = ?`,
-              [result.insertId],
-              (err3, students) => {
-                if (err3) {
-                  console.error('Fetch new student error:', err3);
-                  return res.status(500).json({
-                    success: false,
-                    message: 'Student created but failed to retrieve details.'
-                  });
-                }
-                res.json({
-                  success: true,
-                  student: students[0]
+          // 4) Fetch and return the new record (without password)
+          db.query(
+            `SELECT
+               student_id,
+               first_name,
+               last_name,
+               email,
+               program,
+               semester
+             FROM Student
+             WHERE student_id = ?`,
+            [result.insertId],
+            (err3, students) => {
+              if (err3) {
+                console.error('Fetch new student error:', err3);
+                return res.status(500).json({
+                  success: false,
+                  message: 'Student created but failed to retrieve details.'
                 });
               }
-            );
-          }
-        );
-      } catch (hashErr) {
-        console.error('Hashing error:', hashErr);
-        res.status(500).json({ success: false, message: 'Server error.' });
-      }
+
+              res.json({
+                success: true,
+                student: students[0]
+              });
+            }
+          );
+        }
+      );
     }
   );
 });
+
 
 
 // ---------------------- Update Student API ----------------------
